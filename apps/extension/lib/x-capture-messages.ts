@@ -13,6 +13,8 @@ export const capturedPostSchema = z.unknown().transform((input, context) => {
   return parsed.output
 })
 
+export type CapturedPost = z.output<typeof capturedPostSchema>
+
 export const captureLookupRequestSchema = z.object({
   type: z.literal('x-capture:lookup'),
   postId: postIdSchema,

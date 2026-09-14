@@ -1,4 +1,6 @@
-import type { XPost, XPostMedia } from '@post-embed/types'
+import type { CapturedPost } from './x-capture-messages'
+
+type CapturedMedia = NonNullable<CapturedPost['media']>[number]
 
 interface MediaPosition {
   slot: string
@@ -11,7 +13,7 @@ export type ProbeMediaCandidate = MediaPosition &
   )
 
 function selectVideo(
-  media: Extract<XPostMedia, { type: 'video' | 'gif' }>,
+  media: Extract<CapturedMedia, { type: 'video' | 'gif' }>,
   slot: string,
 ): ProbeMediaCandidate {
   const position = { slot, unavailable: media.unavailable ?? false }
@@ -29,7 +31,7 @@ function selectVideo(
 }
 
 /** Select avatars, photos, posters and one highest-bitrate MP4 per video/GIF. */
-export function collectProbeMedia(post: XPost): ProbeMediaCandidate[] {
+export function collectProbeMedia(post: CapturedPost): ProbeMediaCandidate[] {
   const candidates: ProbeMediaCandidate[] = []
   for (const [prefix, entry] of [
     ['post', post],
