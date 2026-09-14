@@ -4,10 +4,11 @@ interface MediaPosition {
   slot: string
   unavailable: boolean
 }
-export type ProbeMediaCandidate = MediaPosition & (
-  | { kind: 'image' | 'video'; url: string }
-  | { kind: 'unsupported'; reason: 'hls-only' | 'no-source' }
-)
+export type ProbeMediaCandidate = MediaPosition &
+  (
+    | { kind: 'image' | 'video'; url: string }
+    | { kind: 'unsupported'; reason: 'hls-only' | 'no-source' }
+  )
 
 function selectVideo(
   media: Extract<XPostMedia, { type: 'video' | 'gif' }>,
@@ -30,11 +31,18 @@ function selectVideo(
 /** Select avatars, photos, posters and one highest-bitrate MP4 per video/GIF. */
 export function collectProbeMedia(post: XPost): ProbeMediaCandidate[] {
   const candidates: ProbeMediaCandidate[] = []
-  for (const [prefix, entry] of [['post', post], ['quote', post.quote]] as const) {
+  for (const [prefix, entry] of [
+    ['post', post],
+    ['quote', post.quote],
+  ] as const) {
     if (!entry) continue
     if (entry.author.avatar) {
-      candidates.push({ slot: `${prefix}.avatar`, unavailable: false,
-        kind: 'image', url: entry.author.avatar })
+      candidates.push({
+        slot: `${prefix}.avatar`,
+        unavailable: false,
+        kind: 'image',
+        url: entry.author.avatar,
+      })
     }
     for (const [index, media] of (entry.media ?? []).entries()) {
       const slot = `${prefix}.media.${index}`
@@ -66,13 +74,22 @@ function checkedMediaUrl(source: string, kind: 'image' | 'video'): string {
     throw new Error('media-origin-not-allowed')
   }
   const hosts = kind === 'image' ? ['pbs.twimg.com', 'video.twimg.com'] : ['video.twimg.com']
-  if (url.protocol !== 'https:' || url.port || url.username || url.password ||
-    !hosts.includes(url.hostname)) throw new Error('media-origin-not-allowed')
+  if (
+    url.protocol !== 'https:' ||
+    url.port ||
+    url.username ||
+    url.password ||
+    !hosts.includes(url.hostname)
+  )
+    throw new Error('media-origin-not-allowed')
   return url.href
 }
 
 /** Consume an entire media stream within a diagnostic budget, retaining only its prefix. */
-export async function probeMedia(source: string, kind: 'image' | 'video'): Promise<MediaReadResult> {
+export async function probeMedia(
+  source: string,
+  kind: 'image' | 'video',
+): Promise<MediaReadResult> {
   const url = checkedMediaUrl(source, kind)
   const signal = AbortSignal.timeout(120_000)
   let response: Response
@@ -81,7 +98,8 @@ export async function probeMedia(source: string, kind: 'image' | 'video'): Promi
   } catch {
     throw new Error(signal.aborted ? 'probe-time-budget' : 'media-network-error')
   }
-  const mime = (response.headers.get('content-type') ?? '').split(';')[0]?.trim().toLowerCase() ?? ''
+  const mime =
+    (response.headers.get('content-type') ?? '').split(';')[0]?.trim().toLowerCase() ?? ''
   let failure: string | undefined
   if (!response.ok) failure = `media-http-${response.status}`
   else if (kind === 'video' ? mime !== 'video/mp4' : !mime.startsWith('image/')) {

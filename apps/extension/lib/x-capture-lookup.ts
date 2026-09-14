@@ -1,9 +1,6 @@
 import { X_CAPTURE_CHANNEL } from './x-capture'
 import { requestXTweet } from '@post-embed/exporter/x/bridge'
-import {
-  capturedPostSchema,
-  type CaptureLookupResponse,
-} from './x-capture-messages'
+import { capturedPostSchema, type CaptureLookupResponse } from './x-capture-messages'
 
 /** Look up one observed snapshot without crossing into privileged browser APIs. */
 export async function lookupCapturedPost(
@@ -28,4 +25,3 @@ export async function lookupCapturedPost(
     return { ok: false, reason: 'lookup-failed' }
   }
 }
-

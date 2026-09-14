@@ -7,7 +7,12 @@ const { getTab, sendMessage } = vi.hoisted(() => ({ getTab: vi.fn(), sendMessage
 vi.mock('wxt/browser', () => ({ browser: { tabs: { get: getTab, sendMessage } } }))
 const pageUrl = 'https://x.com/example/status/20'
 function lookupResponse(): object {
-  return { ok: true, pageUrl, documentToken: '6b9dbd9f-31ef-45aa-9148-c3c38cbcf59b', post: captureFixture() }
+  return {
+    ok: true,
+    pageUrl,
+    documentToken: '6b9dbd9f-31ef-45aa-9148-c3c38cbcf59b',
+    post: captureFixture(),
+  }
 }
 beforeEach(() => {
   vi.resetAllMocks()
@@ -18,21 +23,33 @@ afterEach(() => vi.unstubAllGlobals())
 
 describe('capture probe', () => {
   it('keeps text and quote when a selected MP4 fails, counts HLS separately, and skips HLS fetches', async () => {
-    const fetchMock = vi.fn(async (url: string) => new Response(new Uint8Array([1, 2, 3]), {
-      status: url.endsWith('.mp4') ? 403 : 200,
-      headers: { 'content-type': url.endsWith('.mp4') ? 'video/mp4' : 'image/jpeg' },
-    }))
+    const fetchMock = vi.fn(
+      async (url: string) =>
+        new Response(new Uint8Array([1, 2, 3]), {
+          status: url.endsWith('.mp4') ? 403 : 200,
+          headers: { 'content-type': url.endsWith('.mp4') ? 'video/mp4' : 'image/jpeg' },
+        }),
+    )
     vi.stubGlobal('fetch', fetchMock)
     const report = await runCaptureProbe(1, '20')
     expect(report.post).toEqual(captureFixture())
     expect(report.counts).toEqual({ videoCount: 2, mp4Available: 1, hlsOnly: 1, noSource: 0 })
     expect(report.results.filter((result) => result.status === 'read')).toHaveLength(4)
-    expect(report.results).toContainEqual({ slot: 'post.media.1', unavailable: false,
-      status: 'failed', kind: 'video', reason: 'media-http-403' })
+    expect(report.results).toContainEqual({
+      slot: 'post.media.1',
+      unavailable: false,
+      status: 'failed',
+      kind: 'video',
+      reason: 'media-http-403',
+    })
     expect(fetchMock).toHaveBeenCalledTimes(5)
     expect(fetchMock.mock.calls.some(([url]) => url.endsWith('.m3u8'))).toBe(false)
     expect(captureProbeResponseSchema.safeParse({ ok: true, report }).success).toBe(true)
-    expect(sendMessage).toHaveBeenCalledWith(1, { type: 'x-capture:lookup', postId: '20' }, { frameId: 0 })
+    expect(sendMessage).toHaveBeenCalledWith(
+      1,
+      { type: 'x-capture:lookup', postId: '20' },
+      { frameId: 0 },
+    )
   })
 
   it.each([
@@ -41,7 +58,7 @@ describe('capture probe', () => {
     [{ incognito: false, url: 'https://x.com/example/status/21' }, 'wrong-permalink'],
   ])('refuses a mismatched tab before querying the page', async (tab, reason) => {
     getTab.mockResolvedValue(tab)
-    await expect(runCaptureProbe(1, '20')).rejects.toThrow(String(reason))
+    await expect(runCaptureProbe(1, '20')).rejects.toThrow(reason)
     expect(sendMessage).not.toHaveBeenCalled()
   })
 
@@ -53,7 +70,8 @@ describe('capture probe', () => {
   })
 
   it('rejects a changed tab before any privileged fetch', async () => {
-    getTab.mockResolvedValueOnce({ incognito: false, url: pageUrl })
+    getTab
+      .mockResolvedValueOnce({ incognito: false, url: pageUrl })
       .mockResolvedValueOnce({ incognito: false, url: 'https://x.com/example/status/21' })
     const fetchMock = vi.fn()
     vi.stubGlobal('fetch', fetchMock)
@@ -74,7 +92,12 @@ describe('capture probe', () => {
 
   it('prevents overlapping probes on the same tab', async () => {
     let release: (value: unknown) => void = () => {}
-    sendMessage.mockImplementationOnce(() => new Promise((resolve) => { release = resolve }))
+    sendMessage.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          release = resolve
+        }),
+    )
     const first = runCaptureProbe(1, '20')
     await expect(runCaptureProbe(1, '20')).rejects.toThrow('probe-already-running')
     release({ ok: false, reason: 'not-observed' })

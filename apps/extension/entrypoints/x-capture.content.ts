@@ -10,7 +10,9 @@ export default defineContentScript({
   main(ctx) {
     const documentToken = crypto.randomUUID()
     const listener: Parameters<typeof browser.runtime.onMessage.addListener>[0] = (
-      message, sender, sendResponse,
+      message,
+      sender,
+      sendResponse,
     ) => {
       if (ctx.isInvalid || sender.id !== browser.runtime.id || sender.tab != null) return false
       const request = captureLookupRequestSchema.safeParse(message)

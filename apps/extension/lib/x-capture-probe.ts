@@ -19,9 +19,14 @@ export async function runCaptureProbe(tabId: number, postId: string): Promise<Ca
     if (permalinkPostId(tab.url) !== postId) throw new Error('wrong-permalink')
     let raw: unknown
     try {
-      raw = await browser.tabs.sendMessage(tabId, {
-        type: 'x-capture:lookup', postId,
-      }, { frameId: 0 })
+      raw = await browser.tabs.sendMessage(
+        tabId,
+        {
+          type: 'x-capture:lookup',
+          postId,
+        },
+        { frameId: 0 },
+      )
     } catch {
       throw new Error('lookup-unavailable')
     }
@@ -51,8 +56,12 @@ export async function runCaptureProbe(tabId: number, postId: string): Promise<Ca
         const read = await probeMedia(media.url, media.kind)
         results.push({ ...position, status: 'read', kind: media.kind, ...read })
       } catch (error) {
-        results.push({ ...position, status: 'failed', kind: media.kind,
-          reason: error instanceof Error ? error.message : 'media-failed' })
+        results.push({
+          ...position,
+          status: 'failed',
+          kind: media.kind,
+          reason: error instanceof Error ? error.message : 'media-failed',
+        })
       }
     }
     return { post: answer.post, documentToken: answer.documentToken, counts, results }

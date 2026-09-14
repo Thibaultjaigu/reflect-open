@@ -1,7 +1,15 @@
 import { z } from 'zod'
 import { BookmarkControls } from './bookmark-controls'
 import { permalinkPostId } from '@/lib/x-capture'
-import { lazy, Suspense, useEffect, useRef, useState, type FormEvent, type ReactElement } from 'react'
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type ReactElement,
+} from 'react'
 import { browser } from 'wxt/browser'
 import { readQueue } from '@/lib/flush'
 import type { FlushResult } from '@/lib/messages'

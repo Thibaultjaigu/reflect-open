@@ -70,4 +70,3 @@ export const captureProbeResponseSchema = z.discriminatedUnion('ok', [
   z.object({ ok: z.literal(true), report: captureProbeReportSchema }),
   failureSchema,
 ])
-
