@@ -32,3 +32,21 @@ minimumReleaseAgeExclude:
 #   '@meowdown/core': https://pkg.pr.new/@meowdown/core@346867e5f1b5336c889e829b146a04fcc0c115c1
 #   '@meowdown/react': https://pkg.pr.new/@meowdown/react@346867e5f1b5336c889e829b146a04fcc0c115c1
 #   '@meowdown/markdown': https://pkg.pr.new/@meowdown/markdown@346867e5f1b5336c889e829b146a04fcc0c115c1
+
+blockExoticSubdeps: false
+overrides:
+  # https://github.com/prosekit/meowdown/pull/589
+  '@meowdown/core': https://pkg.pr.new/@meowdown/core@2414c9732ab7459e034e3635cc7a57c03e5ddbe6
+  '@meowdown/react': https://pkg.pr.new/@meowdown/react@2414c9732ab7459e034e3635cc7a57c03e5ddbe6
+  '@meowdown/markdown': https://pkg.pr.new/@meowdown/markdown@2414c9732ab7459e034e3635cc7a57c03e5ddbe6
+  # https://github.com/prosekit/prosekit/pull/1788
+  '@prosekit/core': https://pkg.pr.new/@prosekit/core@715de84f1ef45eb25b4f5ff36c3a43109bbe4cee
+  '@prosekit/extensions': https://pkg.pr.new/@prosekit/extensions@715de84f1ef45eb25b4f5ff36c3a43109bbe4cee
+  '@prosekit/pm': https://pkg.pr.new/@prosekit/pm@715de84f1ef45eb25b4f5ff36c3a43109bbe4cee
+  '@prosekit/react': https://pkg.pr.new/@prosekit/react@715de84f1ef45eb25b4f5ff36c3a43109bbe4cee
+  '@prosekit/web': https://pkg.pr.new/@prosekit/web@715de84f1ef45eb25b4f5ff36c3a43109bbe4cee
+  # https://github.com/ocavue/post-embed/pull/61
+  '@post-embed/elements': https://pkg.pr.new/@post-embed/elements@0953224726d5cc6164bddcec95b38e76f6973cbb
+  '@post-embed/exporter': https://pkg.pr.new/@post-embed/exporter@0953224726d5cc6164bddcec95b38e76f6973cbb
+  '@post-embed/schema': https://pkg.pr.new/@post-embed/schema@0953224726d5cc6164bddcec95b38e76f6973cbb
+  '@post-embed/types': https://pkg.pr.new/@post-embed/types@0953224726d5cc6164bddcec95b38e76f6973cbb
