@@ -1,36 +1,37 @@
 import { useId, useState, type ReactElement } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   aiProvider,
   aiProviderRequiresApiKey,
   errorMessage,
-  iapRestorePurchases,
   listNotes,
   CHAT_SYSTEM_PROMPT_MAX_LENGTH,
   TRANSCRIPTION_PROMPT_MAX_LENGTH,
   normalizeChatSystemPrompt,
   normalizeTranscriptionPrompt,
+  presentOfferCodeRedeemSheet,
+  syncAppStore,
   type AiPrompt,
   type AiProviderConfig,
   type EditorTextSize,
   type ThemePreference,
 } from '@reflect/core'
-import { useAiPrompts } from '@/hooks/use-ai-prompts'
-import { useAiProviders } from '@/hooks/use-ai-providers'
-import { useAppVersion } from '@/hooks/use-app-version'
-import { usePaywallRequested } from '@/hooks/use-paywall-requested'
-import { useBridgeReady } from '@/hooks/use-bridge-ready'
-import { useCrashTest, useDebugUnlockTap } from '@/hooks/use-debug-unlock'
-import { marketingVersion } from '@/lib/marketing-version'
-import { openUrlSync } from '@/lib/open-url'
-import { queryKeys } from '@/lib/query-client'
-import { AddAiProviderDrawer } from '@/mobile/add-ai-provider-drawer'
-import { AiPromptDrawer } from '@/mobile/ai-prompt-drawer'
-import { AiProviderActionsDrawer } from '@/mobile/ai-provider-actions-drawer'
-import { ConnectGithubDrawer } from '@/mobile/connect-github-drawer'
-import { PRIVACY_POLICY_URL, TERMS_OF_USE_URL } from '@/mobile/legal-urls'
-import { MobileScreenHeader } from '@/mobile/screen-header'
-import { TextSettingDrawer } from '@/mobile/text-setting-drawer'
+import { useAiPrompts } from '@/hooks/use-ai-prompts.ts'
+import { useAiProviders } from '@/hooks/use-ai-providers.ts'
+import { useAppVersion } from '@/hooks/use-app-version.ts'
+import { usePaywallRequested } from '@/hooks/use-paywall-requested.ts'
+import { useBridgeReady } from '@/hooks/use-bridge-ready.ts'
+import { useCrashTest, useDebugUnlockTap } from '@/hooks/use-debug-unlock.ts'
+import { marketingVersion } from '@/lib/marketing-version.ts'
+import { openUrlSync } from '@/lib/open-url.ts'
+import { queryKeys } from '@/lib/query-client.ts'
+import { AddAiProviderDrawer } from '@/mobile/add-ai-provider-drawer.tsx'
+import { AiPromptDrawer } from '@/mobile/ai-prompt-drawer.tsx'
+import { AiProviderActionsDrawer } from '@/mobile/ai-provider-actions-drawer.tsx'
+import { ConnectGithubDrawer } from '@/mobile/connect-github-drawer.tsx'
+import { PRIVACY_POLICY_URL, TERMS_OF_USE_URL } from '@/mobile/legal-urls.ts'
+import { MobileScreenHeader } from '@/mobile/screen-header.tsx'
+import { TextSettingDrawer } from '@/mobile/text-setting-drawer.tsx'
 import {
   SettingsActionRow,
   SettingsGroup,
@@ -39,14 +40,17 @@ import {
   SettingsSwitchRow,
   SettingsValueRow,
   type SegmentedOption,
-} from '@/mobile/settings-list'
-import { useActiveSubscription } from '@/mobile/use-active-subscription'
-import { useAppStoreEnvironment } from '@/mobile/use-app-store-environment'
-import { useMobileSyncStatus } from '@/mobile/use-sync-status'
-import { useGraph } from '@/providers/graph-provider'
-import { useSettings } from '@/providers/settings-provider'
-import { useSyncContext } from '@/providers/sync-provider'
-import { useRouter } from '@/routing/router'
+} from '@/mobile/settings-list.tsx'
+import {
+  refetchActiveSubscription,
+  useActiveSubscription,
+} from '@/mobile/use-active-subscription.ts'
+import { useAppStoreEnvironment } from '@/mobile/use-app-store-environment.ts'
+import { useMobileSyncStatus } from '@/mobile/use-sync-status.ts'
+import { useGraph } from '@/providers/graph-provider.tsx'
+import { useSettings } from '@/providers/settings-provider.tsx'
+import { useSyncContext } from '@/providers/sync-provider.tsx'
+import { useRouter } from '@/routing/router.tsx'
 
 const THEME_OPTIONS: readonly SegmentedOption<ThemePreference>[] = [
   { value: 'system', label: 'System' },
@@ -82,23 +86,40 @@ export function MobileSettings(): ReactElement {
   const { graph, mobileStorageKind, platform } = useGraph()
   const isIos = platform === 'ios'
   const subscription = useActiveSubscription()
+  const queryClient = useQueryClient()
   const [, setPaywallRequested] = usePaywallRequested()
   const [restorePending, setRestorePending] = useState(false)
-  const [restoreMessage, setRestoreMessage] = useState<string | null>(null)
+  const [redeemPending, setRedeemPending] = useState(false)
+  const [subscriptionMessage, setSubscriptionMessage] = useState<string | null>(null)
 
   const handleRestore = async (): Promise<void> => {
     setRestorePending(true)
-    setRestoreMessage(null)
+    setSubscriptionMessage(null)
     try {
-      const count = await iapRestorePurchases()
-      subscription.invalidate()
-      if (count === 0) {
-        setRestoreMessage('No previous purchase found for this Apple account.')
+      await syncAppStore()
+      const found = await refetchActiveSubscription(queryClient)
+      if (found === null) {
+        setSubscriptionMessage('No previous purchase found for this Apple account.')
       }
     } catch {
-      setRestoreMessage('Restore failed. Check your connection and try again.')
+      setSubscriptionMessage('Restore failed. Check your connection and try again.')
     } finally {
       setRestorePending(false)
+    }
+  }
+
+  const handleRedeem = async (): Promise<void> => {
+    setRedeemPending(true)
+    setSubscriptionMessage(null)
+    try {
+      await presentOfferCodeRedeemSheet()
+      // A redeemed code normally arrives as a purchaseUpdated event; the
+      // refetch here covers a sheet that closed without emitting one.
+      subscription.invalidate()
+    } catch {
+      setSubscriptionMessage('Could not open the redemption sheet. Try again.')
+    } finally {
+      setRedeemPending(false)
     }
   }
   const { settings, updateSettings } = useSettings()
@@ -327,7 +348,7 @@ export function MobileSettings(): ReactElement {
           ) : null}
 
           {isIos ? (
-            <SettingsGroup header="Subscription" footer={restoreMessage}>
+            <SettingsGroup header="Subscription" footer={subscriptionMessage}>
               <SettingsValueRow
                 label="Plan"
                 value={
@@ -359,6 +380,13 @@ export function MobileSettings(): ReactElement {
                   }}
                 />
               )}
+              <SettingsActionRow
+                label="Redeem Code"
+                pending={redeemPending}
+                onPress={() => {
+                  void handleRedeem()
+                }}
+              />
               <SettingsActionRow
                 label="Restore Purchases"
                 pending={restorePending}

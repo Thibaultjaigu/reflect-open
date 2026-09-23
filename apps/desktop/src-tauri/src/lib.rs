@@ -104,19 +104,6 @@ mod capability_tests {
     }
 }
 
-/// Which UI family this build serves. The frontend's root gate (Plan 19)
-/// switches between the desktop and mobile surface trees on this answer.
-#[tauri::command]
-fn app_platform() -> &'static str {
-    if cfg!(target_os = "ios") {
-        "ios"
-    } else if cfg!(target_os = "android") {
-        "android"
-    } else {
-        "desktop"
-    }
-}
-
 /// Route `tracing` output to stderr, honoring `RUST_LOG` (default `info`).
 fn init_tracing() {
     use tracing_subscriber::EnvFilter;
@@ -155,12 +142,24 @@ pub fn run() {
     // desktop entries, and Windows dev builds (the installer writes the
     // registry keys in production; macOS reads CFBundleURLTypes). Best-effort
     // — a headless Linux box without xdg-mime must not fail the launch.
-    #[cfg(any(target_os = "linux", all(windows, debug_assertions)))]
+    //
+    // The main window is `create: false` in the config and built here, so it
+    // can carry a new-window handler. It starts hidden (`visible: false`);
+    // desktop reveals it from the page-load hook below after restoring
+    // geometry, but mobile has no window-state plugin, so show it here or the
+    // UI would never appear.
     let builder = builder.setup(|app| {
-        use tauri_plugin_deep_link::DeepLinkExt;
-        if let Err(err) = app.deep_link().register_all() {
-            tracing::warn!(error = %err, "deep-link scheme registration failed");
+        #[cfg(any(target_os = "linux", all(windows, debug_assertions)))]
+        {
+            use tauri_plugin_deep_link::DeepLinkExt;
+            if let Err(err) = app.deep_link().register_all() {
+                tracing::warn!(error = %err, "deep-link scheme registration failed");
+            }
         }
+        #[cfg(desktop)]
+        windows::build_main_window(app.handle())?;
+        #[cfg(mobile)]
+        windows::build_main_window(app.handle())?.show()?;
         Ok(())
     });
 
@@ -249,17 +248,6 @@ pub fn run() {
     #[cfg(target_os = "ios")]
     let builder = builder.plugin(tauri_plugin_app_store::init());
 
-    // The main window starts hidden (`visible: false`); desktop reveals it
-    // from the page-load hook above after restoring geometry, but mobile has
-    // no window-state plugin, so show it here or the UI would never appear.
-    #[cfg(mobile)]
-    let builder = builder.setup(|app| {
-        if let Some(window) = app.get_webview_window(windows::MAIN_WINDOW_LABEL) {
-            window.show()?;
-        }
-        Ok(())
-    });
-
     builder
         // Serves note images (`assets/…`) to the webview. Registered as an
         // *asynchronous* protocol on purpose: WebKit delivers custom-scheme
@@ -281,8 +269,11 @@ pub fn run() {
         .manage(windows::WindowInit::default())
         .manage(embed::EmbedState::default())
         .invoke_handler(tauri::generate_handler![
+            fs::x_archive::x_archive_write,
+            fs::x_archive::x_archive_resolve,
+            fs::x_archive::x_archive_owners,
+            fs::x_syndication::x_syndication_fetch,
             app_version,
-            app_platform,
             background_task::background_task_begin,
             background_task::background_task_end,
             icloud::storage::mobile_storage,

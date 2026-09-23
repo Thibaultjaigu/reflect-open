@@ -3,16 +3,16 @@ import { page, userEvent } from 'vitest/browser'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { setBridge } from '@reflect/core'
-import { expectLocatorToHaveCount } from '@/test-utils/expect'
-import { SuggestedContactCard } from './suggested-contact-card'
+import { expectLocatorToHaveCount } from '@/test-utils/expect.ts'
+import { SuggestedContactCard } from './suggested-contact-card.tsx'
 
 // The card reads the graph (generation for writes) and the contacts opt-in;
 // both providers are per-app plumbing the component test doesn't need.
-vi.mock('@/providers/graph-provider', () => ({
+vi.mock('@/providers/graph-provider.tsx', () => ({
   useGraph: () => ({ graph: { root: '/g', generation: 3 } }),
 }))
 const contactsEnabled = vi.hoisted(() => ({ current: true }))
-vi.mock('@/providers/settings-provider', () => ({
+vi.mock('@/providers/settings-provider.tsx', () => ({
   useSettings: () => ({ settings: { contactsEnabled: contactsEnabled.current } }),
 }))
 
@@ -100,7 +100,7 @@ describe('SuggestedContactCard', () => {
 
     await vi.waitFor(() => expect(written.length).toBe(1))
     expect(written[0]?.contents).toBe(
-      '---\nignoredContacts:\n  - Ada Lovelace\n---\n# Ada Lovelace\n',
+      '---\nignoredContacts:\n  - Ada Lovelace\n---\n\n# Ada Lovelace\n',
     )
     await expectLocatorToHaveCount(page.getByText('Ada Lovelace'), 0)
   })

@@ -3,11 +3,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { renderHook } from 'vitest-browser-react'
 import type { ReactNode } from 'react'
 import { setBridge, type AppPlatform } from '@reflect/core'
-import { usePaywallRequested } from '@/hooks/use-paywall-requested'
-import { resetLocalStorageStores } from '@/lib/local-storage'
-import { queryKeys } from '@/lib/query-client'
-import { SettingsProvider } from '@/providers/settings-provider'
-import { usePaywallGate, type PaywallGate } from './use-paywall-gate'
+import { usePaywallRequested } from '@/hooks/use-paywall-requested.ts'
+import { resetLocalStorageStores } from '@/lib/local-storage.ts'
+import { queryKeys } from '@/lib/query-client.ts'
+import { SettingsProvider } from '@/providers/settings-provider.tsx'
+import { usePaywallGate, type PaywallGate } from './use-paywall-gate.ts'
 
 /**
  * The gate's contract, one case per way in and out of the paywall. The
@@ -20,9 +20,9 @@ import { usePaywallGate, type PaywallGate } from './use-paywall-gate'
 // Hoisted above the imports, as every other graph-provider mock in this suite
 // is: the factory runs before the module body assigns anything.
 const graphState = vi.hoisted(() => ({ platform: 'ios' as AppPlatform }))
-vi.mock('@/providers/graph-provider', () => ({ useGraph: () => graphState }))
+vi.mock('@/providers/graph-provider.tsx', () => ({ useGraph: () => graphState }))
 const bridgeState = vi.hoisted(() => ({ ready: true }))
-vi.mock('@/hooks/use-bridge-ready', () => ({ useBridgeReady: () => bridgeState.ready }))
+vi.mock('@/hooks/use-bridge-ready.ts', () => ({ useBridgeReady: () => bridgeState.ready }))
 
 /** What the install-channel probe answers, or how it fails to. */
 let environment: () => Promise<string>
@@ -122,7 +122,7 @@ beforeEach(() => {
   resetLocalStorageStores()
   sessionStorage.clear()
   queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false, staleTime: Infinity } },
+    defaultOptions: { queries: { retry: false, retryDelay: 0, staleTime: Infinity } },
   })
   installFakeBridge()
 })
@@ -215,7 +215,13 @@ describe('usePaywallGate', () => {
       expect(hook.result.current).toBe('hide')
       expect(lookupCount).toBe(2)
 
-      await hook.act(() => vi.advanceTimersByTimeAsync(5_000))
+      await hook.act(() => vi.advanceTimersByTimeAsync(15_000))
+      // The first deadline is retried once after a zero-delay sleep; the
+      // retry waits on the same still-pending native lookup, so no new
+      // StoreKit call is made.
+      expect(hook.result.current).toBe('hide')
+      await hook.act(() => vi.advanceTimersByTimeAsync(1))
+      await hook.act(() => vi.advanceTimersByTimeAsync(15_000))
       // The observer hears about the timeout on TanStack's zero-delay notify
       // timer, which a fake clock schedules for the next tick.
       await hook.act(() => vi.advanceTimersByTimeAsync(1))

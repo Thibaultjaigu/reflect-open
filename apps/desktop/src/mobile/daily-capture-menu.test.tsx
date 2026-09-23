@@ -1,6 +1,6 @@
 import { render, type RenderResult } from 'vitest-browser-react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { DailyCaptureMenu } from './daily-capture-menu'
+import { DailyCaptureMenu } from './daily-capture-menu.tsx'
 
 const navigate = vi.hoisted(() => vi.fn())
 const hapticImpactLight = vi.hoisted(() => vi.fn())
@@ -22,15 +22,15 @@ const memo = vi.hoisted(() => ({
   discard: vi.fn(),
 }))
 
-vi.mock('@/routing/router', () => ({
+vi.mock('@/routing/router.tsx', () => ({
   useRouter: () => ({ navigate }),
 }))
 
-vi.mock('@/mobile/audio-memo-provider', () => ({
+vi.mock('@/mobile/audio-memo-provider.tsx', () => ({
   useMobileAudioMemo: () => ({ ...memo }),
 }))
 
-vi.mock('@/mobile/haptics', () => ({
+vi.mock('@/mobile/haptics.ts', () => ({
   hapticImpactLight,
 }))
 

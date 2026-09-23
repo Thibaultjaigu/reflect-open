@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { AI_PROVIDERS, DEFAULT_CONTEXT_WINDOW, modelContextWindow } from './provider-catalog'
+import { AI_PROVIDERS, DEFAULT_CONTEXT_WINDOW, modelContextWindow } from './provider-catalog.ts'
 
 describe('AI_PROVIDERS', () => {
   it('orders each provider’s models from most to least capable', () => {
@@ -13,6 +13,8 @@ describe('AI_PROVIDERS', () => {
         id: 'openai',
         models: [
           'gpt-6-astra',
+          'gpt-6-sol',
+          'gpt-6-luna',
           'gpt-5.6-sol',
           'gpt-5.6-terra',
           'gpt-5.6-luna',
@@ -54,6 +56,9 @@ describe('AI_PROVIDERS', () => {
           'openrouter/auto',
           '~openai/gpt-latest',
           '~anthropic/claude-sonnet-latest',
+          'openai/gpt-6-astra',
+          'openai/gpt-6-sol',
+          'openai/gpt-6-luna',
           'openai/gpt-5.6-sol',
         ],
       },

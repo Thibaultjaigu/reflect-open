@@ -1,46 +1,46 @@
 import { describe, expect, it } from 'vitest'
-import { appendBookmark } from './bookmark-capture'
-import { getBookmarkPostId, type BookmarkEnvelope } from './bookmark-envelope'
-import { inboxEnvelopeSchema } from './capture-envelope'
-import { parseNote } from '../markdown/extract'
+import { appendXPost } from './bookmark-capture.ts'
+import type { XPostEnvelope } from './bookmark-envelope.ts'
+import { inboxEnvelopeSchema } from './capture-envelope.ts'
+import { parseNote } from '../markdown/extract.ts'
 
-const capture: BookmarkEnvelope = {
+const capture: XPostEnvelope = {
   version: 2,
   kind: 'x-bookmark',
+  data: { id: '20', createdAt: '', author: { name: '', handle: '' }, body: [] },
   id: '7c9e6679-7425-40de-944b-e07fc1f90ae7',
   source: 'extension',
-  postId: '20',
   capturedAt: '2026-09-09T04:00:00Z',
 }
 
-describe('appendBookmark', () => {
+describe('appendXPost', () => {
   it('keeps frontmatter and prose while adding the section', () => {
     const source = '---\nprivate: true\n---\nMy unfinished thought\n'
-    expect(appendBookmark(source, capture)).toBe(
+    expect(appendXPost(source, capture)).toBe(
       '---\nprivate: true\n---\nMy unfinished thought\n\n## X bookmarks\n\n![](https://x.com/i/status/20)\n',
     )
   })
   it('replays without duplicating and respects a deleted entry', () => {
-    const saved = appendBookmark('', capture)
+    const saved = appendXPost('', capture)
     expect(saved).toBe('## X bookmarks\n\n![](https://x.com/i/status/20)\n')
-    expect(appendBookmark(saved, capture)).toBe(saved)
-    expect(appendBookmark(saved, { ...capture, id: '7c9e6679-7425-40de-944b-e07fc1f90ae8' })).toBe(
+    expect(appendXPost(saved, capture)).toBe(saved)
+    expect(appendXPost(saved, { ...capture, id: '7c9e6679-7425-40de-944b-e07fc1f90ae8' })).toBe(
       saved,
     )
   })
   it('deduplicates URL aliases, but ignores examples inside code fences', () => {
     const fenced = '```md\n![](https://x.com/i/status/20)\n```\n'
-    expect(parseNote({ path: '', source: appendBookmark(fenced, capture) }).links).toHaveLength(1)
+    expect(parseNote({ path: '', source: appendXPost(fenced, capture) }).links).toHaveLength(1)
     const alias = '[source](https://twitter.com/jack/status/20?s=1)\n'
-    expect(appendBookmark(alias, capture)).toBe(alias)
+    expect(appendXPost(alias, capture)).toBe(alias)
   })
   it('appends ten posts to one section and preserves later sections', () => {
     let source = '## X bookmarks\n\nMy note\n\n## Later\nKeep this\n'
     for (let index = 0; index < 10; index++) {
-      source = appendBookmark(source, {
+      source = appendXPost(source, {
         ...capture,
         id: `00000000-0000-4000-8000-${String(index).padStart(12, '0')}`,
-        postId: String(index + 1),
+        data: { ...capture.data, id: String(index + 1) },
       })
     }
     expect(parseNote({ path: '', source }).links).toHaveLength(10)
@@ -71,8 +71,21 @@ it('never falls back to the v1 link parser for an unknown kind or version', () =
   ).toBe(false)
 })
 
-it('accepts canonical IDs and rejects misleading permalink hosts', () => {
-  expect(getBookmarkPostId('https://x.com/i/status/20')).toBe('20')
-  expect(getBookmarkPostId('https://x.com.evil.test/i/status/20')).toBeUndefined()
-  expect(getBookmarkPostId('https://x.com/home')).toBeUndefined()
+it('keeps one post at its first location across both actions', () => {
+  const like = { ...capture, kind: 'x-like' as const }
+  const liked = appendXPost('', like)
+  expect(liked).toBe('## X likes\n\n![](https://x.com/i/status/20)\n')
+  expect(appendXPost(liked, capture)).toBe(liked)
+  const bookmarked = appendXPost('', capture)
+  expect(appendXPost(bookmarked, like)).toBe(bookmarked)
+  const elsewhere = '[already saved](https://twitter.com/jack/status/20)\n'
+  expect(appendXPost(elsewhere, like)).toBe(elsewhere)
+})
+
+it('adds likes before the next section without altering existing prose', () => {
+  const source = '## X likes\n\nMy annotation\n\n## Later\nKeep me\n'
+  const saved = appendXPost(source, { ...capture, kind: 'x-like' })
+  expect(saved).toBe(
+    '## X likes\n\nMy annotation\n\n![](https://x.com/i/status/20)\n\n## Later\nKeep me\n',
+  )
 })

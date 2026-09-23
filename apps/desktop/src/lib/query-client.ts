@@ -99,6 +99,22 @@ export const queryKeys = {
       return [...this.all, root, path] as const
     },
   },
+  xPost: {
+    all: ['x-post'] as const,
+    archive(generation: number, postId: string) {
+      return [...this.all, generation, postId] as const
+    },
+  },
+  xSyndication: {
+    post(postId: string) {
+      return ['x-syndication', postId] as const
+    },
+  },
+  youTubeVideo: {
+    video(url: string) {
+      return ['youtube-video', url] as const
+    },
+  },
   chat: {
     all: ['chat'] as const,
     conversations(root: GraphRoot) {
@@ -234,6 +250,9 @@ export const mutationKeys = {
     get restore() {
       return [...this.all, 'restore'] as const
     },
+    get redeem() {
+      return [...this.all, 'redeem'] as const
+    },
   },
   settings: {
     all: ['settings'] as const,
@@ -349,4 +368,9 @@ export function dropIcloudStatusQuery(): void {
 /** Refetch chat-history queries; called after a turn save or a delete. */
 export function invalidateChatQueries(): void {
   void queryClient.invalidateQueries({ queryKey: queryKeys.chat.all })
+}
+
+/** Re-read archived X posts; called after a capture pass writes archive JSON. */
+export function invalidateXPostQueries(): void {
+  void queryClient.invalidateQueries({ queryKey: queryKeys.xPost.all })
 }

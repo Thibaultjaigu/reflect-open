@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { parseFrontmatter, splitFrontmatter, upsertFrontmatter } from './frontmatter'
-import { isPinned, pinnedOrder } from './model'
+import { parseFrontmatter, splitFrontmatter, upsertFrontmatter } from './frontmatter.ts'
+import { isPinned, pinnedOrder } from './model.ts'
 
 describe('splitFrontmatter', () => {
   it('returns the whole file as body when there is no frontmatter', () => {
@@ -29,6 +29,20 @@ describe('splitFrontmatter', () => {
     const split = splitFrontmatter('---\r\nid: x\r\n---\r\nbody')
     expect(split.raw).toBe('id: x')
     expect(split.body).toBe('body')
+  })
+
+  it.each([
+    ['---\nid: x\n---\n# T\n', '# T\n'],
+    ['---\nid: x\n---\n\n# T\n', '# T\n'],
+    ['---\nid: x\n---\n\n\n# T\n', '\n# T\n'],
+    ['---\nid: x\n---\n  \n# T\n', '# T\n'],
+    ['---\r\nid: x\r\n---\r\n\r\n# T\r\n', '# T\r\n'],
+    ['---\n---\n\n# T\n', '# T\n'],
+    ['\n# T\n', '\n# T\n'],
+  ])('reads one blank line after the block as its separator: %j', (source, body) => {
+    const split = splitFrontmatter(source)
+    expect(split.body).toBe(body)
+    expect(source.slice(split.bodyOffset)).toBe(body)
   })
 })
 
@@ -93,7 +107,7 @@ describe('parseFrontmatter', () => {
 
 describe('upsertFrontmatter', () => {
   it('creates a block when none exists', () => {
-    expect(upsertFrontmatter('# Body', { id: 'x' })).toBe('---\nid: x\n---\n# Body')
+    expect(upsertFrontmatter('# Body', { id: 'x' })).toBe('---\nid: x\n---\n\n# Body')
   })
 
   it('updates a key while preserving unknown keys and the body byte-for-byte', () => {
@@ -132,10 +146,26 @@ describe('upsertFrontmatter', () => {
     expect(upsertFrontmatter('# Body', { pinned: undefined })).toBe('# Body')
   })
 
+  it('deletes a missing key from an empty block without throwing', () => {
+    expect(upsertFrontmatter('---\n---\n# T\n', { pinned: undefined })).toBe('# T\n')
+  })
+
+  it('writes the block in the line ending of the document', () => {
+    expect(upsertFrontmatter('---\r\nid: x\r\n---\r\n\r\n# T\r\n', { pinned: true })).toBe(
+      '---\r\nid: x\r\npinned: true\r\n---\r\n\r\n# T\r\n',
+    )
+    expect(upsertFrontmatter('# T\r\n', { id: 'x' })).toBe('---\r\nid: x\r\n---\r\n\r\n# T\r\n')
+  })
+
+  it('keeps a body that opens with a blank line when it creates a block', () => {
+    const patched = upsertFrontmatter('\n# T\n', { id: 'x' })
+    expect(splitFrontmatter(patched).body).toBe('\n# T\n')
+  })
+
   it('round-trips pin → unpin back to the original source', () => {
     const source = '# Body\n\ntext'
     const pinned = upsertFrontmatter(source, { pinned: true })
-    expect(pinned).toBe('---\npinned: true\n---\n# Body\n\ntext')
+    expect(pinned).toBe('---\npinned: true\n---\n\n# Body\n\ntext')
     expect(upsertFrontmatter(pinned, { pinned: undefined })).toBe(source)
   })
 

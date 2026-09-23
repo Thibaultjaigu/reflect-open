@@ -21,7 +21,7 @@ use crate::HostError;
 pub(crate) struct Pointer {
     version: u32,
     pub graph_root: String,
-    pub bookmark_version: Option<u32>,
+    pub x_like_version: Option<u32>,
 }
 
 /// Default pointer-file location, shared with the desktop app's conventions
@@ -61,8 +61,12 @@ pub(crate) fn read_pointer(pointer_path: &Path) -> Result<Pointer, HostError> {
 
 /// Resolve the inbox of the desktop-selected graph.
 pub fn inbox_dir(pointer_path: &Path) -> Result<PathBuf, HostError> {
-    let pointer = read_pointer(pointer_path)?;
-    let inbox = PathBuf::from(pointer.graph_root)
+    inbox_dir_of(&read_pointer(pointer_path)?)
+}
+
+/// The pointed graph's inbox, created if missing.
+pub(crate) fn inbox_dir_of(pointer: &Pointer) -> Result<PathBuf, HostError> {
+    let inbox = PathBuf::from(&pointer.graph_root)
         .join(".reflect")
         .join("inbox");
     std::fs::create_dir_all(&inbox)

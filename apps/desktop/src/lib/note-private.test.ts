@@ -1,9 +1,9 @@
 import { QueryClient } from '@tanstack/react-query'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { NoteRow } from '@reflect/core'
-import { queryKeys } from '@/lib/query-client'
-import { createNoteSession } from '@/editor/note-session'
-import type { NoteSession } from '@/editor/note-session'
+import { queryKeys } from '@/lib/query-client.ts'
+import { createNoteSession } from '@/editor/note-session.ts'
+import type { NoteSession } from '@/editor/note-session.ts'
 
 const readNote = vi.hoisted(() => vi.fn<(path: string) => Promise<string>>())
 const writeNote = vi.hoisted(() => vi.fn(async () => {}))
@@ -14,13 +14,13 @@ vi.mock('@reflect/core', async (importOriginal) => ({
   readNote,
   writeNote,
 }))
-vi.mock('@/editor/open-documents', () => ({ openSession }))
+vi.mock('@/editor/open-documents.ts', () => ({ openSession }))
 
-const { toggleNotePrivate } = await import('./note-private')
+const { toggleNotePrivate } = await import('./note-private.ts')
 
 let client: QueryClient
 const operationFail = vi.hoisted(() => vi.fn())
-vi.mock('@/lib/operations', () => ({ startOperation: () => ({ fail: operationFail }) }))
+vi.mock('@/lib/operations.ts', () => ({ startOperation: () => ({ fail: operationFail }) }))
 
 function input(path = 'notes/a.md') {
   return { queryClient: client, root: '/g', generation: 3, path }
@@ -49,7 +49,7 @@ describe('toggleNotePrivate', () => {
   it('marks an unopened note private via read-patch-write on disk', async () => {
     readNote.mockResolvedValue('# A\n')
     await expect(toggleNotePrivate(input())).resolves.toBeUndefined()
-    expect(writeNote).toHaveBeenCalledWith('notes/a.md', '---\nprivate: true\n---\n# A\n', 3)
+    expect(writeNote).toHaveBeenCalledWith('notes/a.md', '---\nprivate: true\n---\n\n# A\n', 3)
   })
 
   it('un-marks on disk by removing the key (back to no frontmatter)', async () => {
@@ -69,7 +69,7 @@ describe('toggleNotePrivate', () => {
   it('replaces an explicit `private: false` with `private: true` when toggling on', async () => {
     readNote.mockResolvedValue('---\nprivate: false\n---\n# A\n')
     await expect(toggleNotePrivate(input())).resolves.toBeUndefined()
-    expect(writeNote).toHaveBeenCalledWith('notes/a.md', '---\nprivate: true\n---\n# A\n', 3)
+    expect(writeNote).toHaveBeenCalledWith('notes/a.md', '---\nprivate: true\n---\n\n# A\n', 3)
   })
 
   it('routes through the live session, which owns landing the patch', async () => {
@@ -93,7 +93,7 @@ describe('toggleNotePrivate', () => {
     openSession.mockReturnValue(session)
     readNote.mockResolvedValue('# A\n')
     await expect(toggleNotePrivate(input())).resolves.toBeUndefined()
-    expect(writeNote).toHaveBeenCalledWith('notes/a.md', '---\nprivate: true\n---\n# A\n', 3)
+    expect(writeNote).toHaveBeenCalledWith('notes/a.md', '---\nprivate: true\n---\n\n# A\n', 3)
   })
 
   it('marks a not-yet-created note private by creating its file (the lazy contract)', async () => {
@@ -102,7 +102,7 @@ describe('toggleNotePrivate', () => {
     openSession.mockReturnValue(session)
     readNote.mockRejectedValue({ kind: 'notFound', message: 'no such note' })
     await expect(toggleNotePrivate(input('daily/2026-06-10.md'))).resolves.toBeUndefined()
-    expect(writeNote).toHaveBeenCalledWith('daily/2026-06-10.md', '---\nprivate: true\n---\n', 3)
+    expect(writeNote).toHaveBeenCalledWith('daily/2026-06-10.md', '---\nprivate: true\n---\n\n', 3)
   })
 
   it('reports non-notFound read failures through operations', async () => {

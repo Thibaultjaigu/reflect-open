@@ -1,23 +1,27 @@
 {
   "name": "@reflect/extension",
-  "version": "0.1.2",
+  "version": "0.4.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "wxt",
     "build": "wxt build",
     "zip": "WXT_STORE_BUILD=true wxt zip",
+    "zip:unpacked": "wxt zip",
     "typecheck": "wxt prepare && tsc -b",
     "test": "vitest run",
     "postinstall": "wxt prepare"
   },
   "dependencies": {
+    "@post-embed/exporter": "^0.5.0",
+    "@post-embed/schema": "^0.5.2",
     "@reflect/core": "workspace:*",
     "@reflect/design-system": "workspace:*",
     "defuddle": "^0.19.3",
+    "lucide-react": "^1.45.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
-    "zod": "^4.5.4"
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
@@ -26,7 +30,8 @@
     "@wxt-dev/module-react": "^1.2.2",
     "tailwindcss": "^4.3.3",
     "typescript": "~6.0.3",
-    "vitest": "^4.1.11",
-    "wxt": "^0.20.27"
+    "vite": "^8.3.0",
+    "vitest": "^5.0.1",
+    "wxt": "^0.21.4"
   }
 }

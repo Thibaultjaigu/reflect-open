@@ -5,16 +5,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { format } from 'date-fns'
 import { act, StrictMode, type ReactElement } from 'react'
 import { setBridge } from '@reflect/core'
-import { clearFormattingToolbar, publishFormattingToolbar } from '@/editor/formatting-toolbar-store'
-import { RouterProvider, useRouter } from '@/routing/router'
-import type { Route } from '@/routing/route'
-import { addDaysIso, formatDayLabel, parseIsoDate, todayIso } from '@/lib/dates'
-import { monthLabel, monthOf } from '@/lib/month-grid'
-import { fireEvent } from '@/test-utils/fire-event'
-import '@/test-utils/locator'
-import { createWeekWindow, weekOf } from './calendar'
-import { MobileShell } from './mobile-shell'
-import { publishKeyboardHeight } from './use-keyboard'
+import {
+  clearFormattingToolbar,
+  publishFormattingToolbar,
+} from '@/editor/formatting-toolbar-store.ts'
+import { RouterProvider, useRouter } from '@/routing/router.tsx'
+import type { Route } from '@/routing/route.ts'
+import { addDaysIso, formatDayLabel, parseIsoDate, todayIso } from '@/lib/dates.ts'
+import { monthLabel, monthOf } from '@/lib/month-grid.ts'
+import { fireEvent } from '@/test-utils/fire-event.ts'
+import '@/test-utils/locator.ts'
+import { createWeekWindow, weekOf } from './calendar.ts'
+import { MobileShell } from './mobile-shell.tsx'
+import { publishKeyboardHeight } from './use-keyboard.ts'
 
 const waitFor = vi.waitFor
 
@@ -32,7 +35,7 @@ const editorProbe = vi.hoisted(() => ({
 }))
 const hapticImpactLight = vi.hoisted(() => vi.fn())
 
-vi.mock('@/editor/note-editor', async () => {
+vi.mock('@/editor/note-editor.tsx', async () => {
   const { useEffect, useRef } = await import('react')
   return {
     NoteEditor: ({
@@ -42,7 +45,7 @@ vi.mock('@/editor/note-editor', async () => {
     }: {
       initialContent: string
       onWikiLinkClick?: (options: { target: string; openInNewWindow: boolean }) => void
-      handleRef?: (handle: import('@/editor/note-editor').NoteEditorHandle | null) => void
+      handleRef?: (handle: import('@/editor/note-editor.tsx').NoteEditorHandle | null) => void
     }) => {
       const markdownRef = useRef(initialContent)
       useEffect(() => {
@@ -85,7 +88,7 @@ vi.mock('@/editor/note-editor', async () => {
     },
   }
 })
-vi.mock('@/mobile/haptics', () => ({
+vi.mock('@/mobile/haptics.ts', () => ({
   hapticImpactLight,
 }))
 
@@ -106,7 +109,7 @@ vi.mock('@reflect/core', async (importOriginal) => ({
 // Vaul's drag/animation is verified on-device. This passthrough
 // honours `open`, so the month-picker sheet renders only once the title
 // opens it.
-vi.mock('@/components/ui/drawer', () => ({
+vi.mock('@/components/ui/drawer.tsx', () => ({
   Drawer: ({ open, children }: { open?: boolean; children?: import('react').ReactNode }) =>
     open ? <div data-testid="drawer">{children}</div> : null,
   DrawerContent: ({ children }: { children?: import('react').ReactNode }) => <div>{children}</div>,
@@ -116,13 +119,13 @@ vi.mock('@/components/ui/drawer', () => ({
   DrawerTrigger: ({ children }: { children?: import('react').ReactNode }) => <>{children}</>,
 }))
 
-vi.mock('@/providers/graph-provider', () => ({
+vi.mock('@/providers/graph-provider.tsx', () => ({
   useGraph: () => ({
     graph: { root: '/g', name: 'g', generation: 1 },
     indexing: false,
   }),
 }))
-vi.mock('@/providers/settings-provider', () => ({
+vi.mock('@/providers/settings-provider.tsx', () => ({
   useSettings: () => ({
     settings: {
       editorMarkdownSyntax: 'hide',
@@ -140,7 +143,7 @@ vi.mock('@/providers/settings-provider', () => ({
 }))
 // The daily spine renders the capture menu; this suite is about screens,
 // not recording — an unavailable memo surface keeps its mic action out.
-vi.mock('@/mobile/audio-memo-provider', () => ({
+vi.mock('@/mobile/audio-memo-provider.tsx', () => ({
   useMobileAudioMemo: () => ({
     phase: 'idle',
     elapsedMs: 0,
@@ -544,7 +547,7 @@ describe('MobileShell', () => {
 
     await user.click(view.getByRole('button', { name: 'All' }))
     await expect.element(view.getByRole('searchbox', { name: 'Search notes' })).toBeVisible()
-    await expect.element(view.getByText('No notes yet')).toHaveTextContent('No notes yet')
+    await expect.element(view.getByText('No notes yet')).toMatchTextContent('No notes yet')
 
     await user.click(view.getByRole('button', { name: 'Daily', exact: true }))
     await waitFor(() =>
@@ -651,7 +654,7 @@ describe('MobileShell', () => {
     await user.click(view.getByRole('button', { name: 'Tasks' }))
     await expect.element(view.getByRole('searchbox', { name: 'Search tasks' })).toBeVisible()
     // The fake bridge's index is empty, so the tab lands on its empty state.
-    await expect.element(view.getByText('No tasks to show')).toHaveTextContent('No tasks to show')
+    await expect.element(view.getByText('No tasks to show')).toMatchTextContent('No tasks to show')
   })
 
   it('double-tapping Tasks selects the task search filter', async () => {

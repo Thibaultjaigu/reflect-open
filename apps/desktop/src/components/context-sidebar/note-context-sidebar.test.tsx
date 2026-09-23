@@ -3,9 +3,9 @@ import { userEvent } from 'vitest/browser'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ReactNode } from 'react'
-import { TooltipProvider } from '@/components/ui/tooltip'
-import { RouterProvider, useRouter } from '@/routing/router'
-import { NoteContextSidebar } from './note-context-sidebar'
+import { TooltipProvider } from '@/components/ui/tooltip.tsx'
+import { RouterProvider, useRouter } from '@/routing/router.tsx'
+import { NoteContextSidebar } from './note-context-sidebar.tsx'
 
 const relatedNotes = vi.hoisted(() => vi.fn())
 vi.mock('@reflect/core', async (importOriginal) => ({
@@ -13,10 +13,10 @@ vi.mock('@reflect/core', async (importOriginal) => ({
   hasBridge: () => true,
   relatedNotes,
 }))
-vi.mock('@/providers/graph-provider', () => ({
+vi.mock('@/providers/graph-provider.tsx', () => ({
   useGraph: () => ({ graph: { root: '/g', name: 'g', generation: 1 } }),
 }))
-vi.mock('@/providers/settings-provider', () => ({
+vi.mock('@/providers/settings-provider.tsx', () => ({
   useSettings: () => ({
     settings: { semanticSearchEnabled: true },
     updateSettings: () => {},
@@ -69,8 +69,8 @@ describe('NoteContextSidebar', () => {
     const view = await renderSidebar('notes/rust.md')
     await expect.element(view.getByText('Similar notes')).toBeInTheDocument()
     await userEvent.click(view.getByText('Zig'))
-    await expect.element(view.getByTestId('route')).toHaveTextContent('"kind":"note"')
-    await expect.element(view.getByTestId('route')).toHaveTextContent('notes/zig.md')
+    await expect.element(view.getByTestId('route')).toMatchTextContent('"kind":"note"')
+    await expect.element(view.getByTestId('route')).toMatchTextContent('notes/zig.md')
     await view.unmount()
   })
 })

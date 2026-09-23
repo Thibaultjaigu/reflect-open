@@ -1,15 +1,16 @@
+import { parseXPostId } from '@post-embed/schema'
 import type { SyntaxNode } from '@meowdown/markdown'
-import { dateFromDailyPath, isAttachmentPath, isDaily } from '../graph/paths'
-import { parseFrontmatter, splitFrontmatter } from './frontmatter'
-import { parseBody } from './grammar'
-import { foldTag } from './keys'
-import { parseInlineLink } from './link-syntax'
-import { headingLevelOf } from './node-types'
-import { buildPlainText, plainTextOfRange, unescapeMarkdownText } from './plain-text'
-import { normalizeWikiTarget } from './resolve'
-import { taskBreadcrumbs } from './task-breadcrumbs'
-import { parseTaskMarker } from './task-marker'
-import { isWikiNodeName, wikiBracketStart } from './wiki-nodes'
+import { dateFromDailyPath, isAttachmentPath, isDaily } from '../graph/paths.ts'
+import { parseFrontmatter, splitFrontmatter } from './frontmatter.ts'
+import { parseBody } from './grammar.ts'
+import { foldTag } from './keys.ts'
+import { parseInlineLink } from './link-syntax.ts'
+import { headingLevelOf } from './node-types.ts'
+import { buildPlainText, plainTextOfRange, unescapeMarkdownText } from './plain-text.ts'
+import { normalizeWikiTarget } from './resolve.ts'
+import { taskBreadcrumbs } from './task-breadcrumbs.ts'
+import { parseTaskMarker } from './task-marker.ts'
+import { isWikiNodeName, wikiBracketStart } from './wiki-nodes.ts'
 import type {
   AssetRef,
   Frontmatter,
@@ -19,7 +20,7 @@ import type {
   ParsedTask,
   Span,
   WikiLink,
-} from './model'
+} from './model.ts'
 
 /**
  * Extraction (Plan 03): one walk of the Lezer tree derives every entity the
@@ -478,6 +479,12 @@ export function parseNote(input: { path: string; source: string }): ParsedNote {
       if (name === 'Link' || name === 'Image') {
         const link = readLink(body, from, to, bodyOffset)
         if (link) {
+          const postId = parseXPostId(link.href)
+          if (postId)
+            // Index the logical archive reference even before capture, just like an
+            // attachment link can precede its file. This also tracks archives and
+            // media synced from another device without local transfer state.
+            assets.push({ path: 'assets/x/post-' + postId + '.json', from: link.from, to: link.to })
           const candidates = attachmentReferenceCandidates(path, link.href)
           if (candidates.length > 0) {
             // One authored reference, several spellings of the same file: the

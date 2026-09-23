@@ -4,11 +4,11 @@ import { page, userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import type { ReactElement } from 'react'
 import { setBridge } from '@reflect/core'
-import { resetOperations, useOperations } from '@/lib/operations'
-import { queryKeys } from '@/lib/query-client'
-import { RouterProvider, useRouter } from '@/routing/router'
-import { expectLocatorToHaveCount } from '@/test-utils/expect'
-import { AllNotesScreen } from './all-notes-screen'
+import { resetOperations, useOperations } from '@/lib/operations.ts'
+import { queryKeys } from '@/lib/query-client.ts'
+import { RouterProvider, useRouter } from '@/routing/router.tsx'
+import { expectLocatorToHaveCount } from '@/test-utils/expect.ts'
+import { AllNotesScreen } from './all-notes-screen.tsx'
 
 /**
  * The All Notes screen over the real query layer and a fake IPC bridge: rows
@@ -21,13 +21,13 @@ const settingsState = vi.hoisted((): { dateFormat: 'mdy' | 'dmy' | 'iso' } => ({
 }))
 const openRouteInNewWindow = vi.hoisted(() => vi.fn<() => Promise<boolean>>())
 
-vi.mock('@/providers/graph-provider', () => ({
+vi.mock('@/providers/graph-provider.tsx', () => ({
   useGraph: () => ({
     graph: { root: '/g', name: 'g', generation: 1 },
     indexing: false,
   }),
 }))
-vi.mock('@/providers/settings-provider', () => ({
+vi.mock('@/providers/settings-provider.tsx', () => ({
   useSettings: () => ({
     settings: {
       editorMarkdownSyntax: 'hide',
@@ -39,8 +39,8 @@ vi.mock('@/providers/settings-provider', () => ({
     updateSettings: () => {},
   }),
 }))
-vi.mock('@/lib/windows/open-in-new-window', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@/lib/windows/open-in-new-window')>()),
+vi.mock('@/lib/windows/open-in-new-window.ts', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/windows/open-in-new-window.ts')>()),
   openRouteInNewWindow,
 }))
 
@@ -385,8 +385,8 @@ describe('AllNotesScreen', () => {
     // `book` is pinned, so the combobox offers only `travel` (with its count).
     await view.getByRole('button', { name: 'Custom' }).click()
     const listbox = page.getByRole('listbox')
-    await expect.element(listbox).toHaveTextContent('#travel')
-    await expect.element(listbox).toHaveTextContent('2')
+    await expect.element(listbox).toMatchTextContent('#travel')
+    await expect.element(listbox).toMatchTextContent('2')
     expect(listbox.element().textContent).not.toContain('#book')
 
     await page.getByRole('option', { name: /#travel/ }).click()
@@ -635,7 +635,7 @@ describe('AllNotesScreen — selection and bulk trash', () => {
 
     // The confirm closes either way; the reason lands in the operations toast.
     await expectLocatorToHaveCount(page.getByText('Trash 1 note?'), 0)
-    await expect.element(view.getByTestId('operations')).toHaveTextContent('failed:disk on fire')
+    await expect.element(view.getByTestId('operations')).toMatchTextContent('failed:disk on fire')
     // The note that failed to trash is left in the list and stays selected, so
     // the bulk action is still available for an immediate retry (no re-select).
     await expect.element(view.getByText('Health Stacked')).toBeInTheDocument()

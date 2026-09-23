@@ -1,7 +1,8 @@
-import { isAppError } from '../errors'
-import { readNote } from '../graph/commands'
-import { assetReferenceMatches, assetReferencingNotePaths } from '../indexing/asset-refs'
-import { parseNote } from '../markdown/extract'
+import { isAppError } from '../errors.ts'
+import { readNote } from '../graph/commands.ts'
+import { assetReferenceMatches, assetReferencingNotePaths } from '../indexing/asset-refs.ts'
+import { parseNote } from '../markdown/extract.ts'
+import { getXArchiveOwners } from '../x-archive.ts'
 
 /**
  * The asset privacy verdict both asset-description consumers share: the
@@ -26,9 +27,13 @@ export type AssetVerdict = 'send' | 'skip-unreferenced' | 'skip-private'
  * Fails closed: an unreadable candidate blocks the asset.
  */
 export async function classifyAsset(assetPath: string, generation: number): Promise<AssetVerdict> {
-  const candidates = await assetReferencingNotePaths(assetPath)
-  return await classifyAssetFromNotes(assetPath, candidates, (notePath) =>
-    readNote(notePath, generation),
+  const owners = await getXArchiveOwners(assetPath, generation)
+  const candidates = await assetReferencingNotePaths(assetPath, owners)
+  return await classifyAssetFromNotes(
+    assetPath,
+    candidates,
+    (notePath) => readNote(notePath, generation),
+    owners,
   )
 }
 
@@ -42,10 +47,13 @@ export async function classifyAssetFromNotes(
   assetPath: string,
   candidates: readonly string[],
   readSource: (notePath: string) => Promise<string>,
+  knownOwners?: readonly string[],
 ): Promise<AssetVerdict> {
   if (candidates.length === 0) {
     return 'skip-unreferenced'
   }
+  const owners = knownOwners ?? (await getXArchiveOwners(assetPath))
+  const references = [assetPath, ...owners]
   let publicRefs = 0
   for (const notePath of candidates) {
     let source: string
@@ -58,7 +66,9 @@ export async function classifyAssetFromNotes(
       return 'skip-private'
     }
     const parsed = parseNote({ path: notePath, source })
-    if (!parsed.assets.some((ref) => assetReferenceMatches(ref.path, assetPath))) {
+    if (
+      !parsed.assets.some((ref) => references.some((path) => assetReferenceMatches(ref.path, path)))
+    ) {
       continue
     }
     if (parsed.frontmatter.private) {

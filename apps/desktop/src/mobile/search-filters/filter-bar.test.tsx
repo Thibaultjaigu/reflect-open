@@ -5,8 +5,8 @@ import { userEvent } from 'vitest/browser'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { setBridge } from '@reflect/core'
 import type { NoteTagFacet } from '@reflect/core'
-import { FilterBar } from './filter-bar'
-import { EMPTY_ALL_NOTES_FILTERS, type AllNotesFilters } from './filter-state'
+import { FilterBar } from './filter-bar.tsx'
+import { EMPTY_ALL_NOTES_FILTERS, type AllNotesFilters } from './filter-state.ts'
 
 /**
  * The filter badge row (Plan 19): chips toggle or open pickers, everything
@@ -16,7 +16,7 @@ import { EMPTY_ALL_NOTES_FILTERS, type AllNotesFilters } from './filter-state'
  * are always rendered and the state flow is what's exercised.
  */
 
-vi.mock('@/components/ui/drawer', () => ({
+vi.mock('@/components/ui/drawer.tsx', () => ({
   Drawer: ({ children, open }: { children?: ReactNode; open?: boolean }) =>
     open ? <>{children}</> : null,
   DrawerContent: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
@@ -24,7 +24,7 @@ vi.mock('@/components/ui/drawer', () => ({
   DrawerTitle: ({ children }: { children?: ReactNode }) => <h2>{children}</h2>,
 }))
 
-vi.mock('@/providers/graph-provider', () => ({
+vi.mock('@/providers/graph-provider.tsx', () => ({
   useGraph: () => ({ graph: { root: '/g', name: 'g', generation: 1 } }),
 }))
 

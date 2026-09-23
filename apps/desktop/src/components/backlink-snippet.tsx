@@ -1,10 +1,12 @@
+import { useXPostResolver, X_MEDIA_URL_PROTOCOLS } from '@/editor/use-x-post-resolver.ts'
+import { resolveYouTubeVideo } from '@/editor/youtube-video-resolver.ts'
 import type { ReactElement } from 'react'
 import { MarkdownView } from '@meowdown/react'
 import type { WikilinkClickHandler } from '@meowdown/core'
 import type { SnippetTask } from '@reflect/core'
-import { useOpenExternalLink } from '@/editor/open-external-link'
-import { resolveWikilink } from '@/editor/resolve-wikilink'
-import { useSnippetTaskToggle } from '@/hooks/use-snippet-task-toggle'
+import { useOpenExternalLink } from '@/editor/open-external-link.ts'
+import { resolveWikilink } from '@/editor/resolve-wikilink.ts'
+import { useSnippetTaskToggle } from '@/hooks/use-snippet-task-toggle.ts'
 
 interface BacklinkSnippetProps {
   /** The referencing block context's Markdown source (may span several lines). */
@@ -42,11 +44,15 @@ export function BacklinkSnippet({
   onWikilinkClick,
   resolveImageUrl,
 }: BacklinkSnippetProps): ReactElement {
+  const resolveXPost = useXPostResolver()
   const onTaskClick = useSnippetTaskToggle(notePath, tasks)
   const openExternalLink = useOpenExternalLink()
   return (
     <div className="reflect-backlink-snippet select-text text-xs text-text">
       <MarkdownView
+        resolveXPost={resolveXPost}
+        resolveYouTubeVideo={resolveYouTubeVideo}
+        mediaUrlProtocols={X_MEDIA_URL_PROTOCOLS}
         className="reflect-editor"
         markdown={text}
         expandCollapsed

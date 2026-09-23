@@ -1,5 +1,116 @@
 # Changelog
 
+## [0.14.0-beta](https://github.com/team-reflect/reflect-open/compare/v0.13.0...v0.14.0-beta) (2026-09-23)
+
+
+### Features
+
+* add GPT-6 Sol and Luna to the AI model catalog ([#1345](https://github.com/team-reflect/reflect-open/issues/1345)) ([a202263](https://github.com/team-reflect/reflect-open/commit/a2022636ed809c7287dfd1c95600913f9f2d4731))
+
+## [0.13.0-beta.5](https://github.com/team-reflect/reflect-open/compare/v0.13.0-beta.4...v0.13.0-beta.5) (2026-09-21)
+
+
+### Bug Fixes
+
+* **desktop:** open new-window requests in the browser ([#1342](https://github.com/team-reflect/reflect-open/issues/1342)) ([54446cd](https://github.com/team-reflect/reflect-open/commit/54446cd711aff306a01bf7e38cab34a554abce7d))
+
+## [0.13.0-beta.4](https://github.com/team-reflect/reflect-open/compare/v0.13.0-beta.3...v0.13.0-beta.4) (2026-09-21)
+
+
+### Bug Fixes
+
+* **desktop:** move the video lightbox close button to the right ([#1340](https://github.com/team-reflect/reflect-open/issues/1340)) ([cedca81](https://github.com/team-reflect/reflect-open/commit/cedca813a9d6a71d6bae9e194b2f18588fac0148))
+* load YouTube video cards through Rust ([#1339](https://github.com/team-reflect/reflect-open/issues/1339)) ([604b62a](https://github.com/team-reflect/reflect-open/commit/604b62a90cd33368b06dc5b4e10e760542dda931))
+
+## [0.13.0-beta.3](https://github.com/team-reflect/reflect-open/compare/v0.13.0-beta.2...v0.13.0-beta.3) (2026-09-21)
+
+
+### Features
+
+* **desktop:** open YouTube videos in the lightbox ([#1336](https://github.com/team-reflect/reflect-open/issues/1336)) ([cba57a9](https://github.com/team-reflect/reflect-open/commit/cba57a983d1f3e8c43a111c977f851707bf03814))
+
+
+### Bug Fixes
+
+* load a pasted X post that has no saved archive ([#1335](https://github.com/team-reflect/reflect-open/issues/1335)) ([8af56c4](https://github.com/team-reflect/reflect-open/commit/8af56c40e07db19471c46f40c2b33700c1d7f2a1))
+
+## [0.13.0-beta.2](https://github.com/team-reflect/reflect-open/compare/v0.13.0-beta.1...v0.13.0-beta.2) (2026-09-21)
+
+
+### Features
+
+* **desktop:** open X post photos and videos in the lightbox ([#1323](https://github.com/team-reflect/reflect-open/issues/1323)) ([b2dd673](https://github.com/team-reflect/reflect-open/commit/b2dd673da5571cfa2a9cc4057f7de73f89b0d153))
+
+
+### Bug Fixes
+
+* rank backlink suggestions by link count ([#1317](https://github.com/team-reflect/reflect-open/issues/1317)) ([6dc575f](https://github.com/team-reflect/reflect-open/commit/6dc575f23558a5d9160851c0b2c9cf4723b6f576))
+* rank word-start matches higher for autocomplete ([#1318](https://github.com/team-reflect/reflect-open/issues/1318)) ([0bc1969](https://github.com/team-reflect/reflect-open/commit/0bc1969b1b722919c047f6527e9d609fab83bcaf))
+
+## [0.13.0-beta.1](https://github.com/team-reflect/reflect-open/compare/v0.13.0-beta...v0.13.0-beta.1) (2026-09-18)
+
+
+### Bug Fixes
+
+* keep open-in-new-window from navigating other note windows ([#1311](https://github.com/team-reflect/reflect-open/issues/1311)) ([d564d80](https://github.com/team-reflect/reflect-open/commit/d564d80f121885db16c13376bd78cf1de633e65a))
+* keep the blank line after frontmatter out of the note body ([#1303](https://github.com/team-reflect/reflect-open/issues/1303)) ([442bac0](https://github.com/team-reflect/reflect-open/commit/442bac09737b7863376fa3a75d7c610d66bea6cc))
+* **mobile:** keep incoming backlinks on screen below a short note ([#1312](https://github.com/team-reflect/reflect-open/issues/1312)) ([e0ea126](https://github.com/team-reflect/reflect-open/commit/e0ea126839ea53808412d75d1be8ecba3c6b36a6))
+* update meowdown ([#1298](https://github.com/team-reflect/reflect-open/issues/1298)) ([a585000](https://github.com/team-reflect/reflect-open/commit/a5850002797c647b100bc96562141dba29f6e1fd))
+
+## [0.13.0-beta](https://github.com/team-reflect/reflect-open/compare/v0.12.0...v0.13.0-beta) (2026-09-17)
+
+
+### Features
+
+* preload X posts before mounting the note editor ([#1297](https://github.com/team-reflect/reflect-open/issues/1297)) ([2fdac9a](https://github.com/team-reflect/reflect-open/commit/2fdac9a87d9bfdb9c2e2da564f10caa28dc4594b))
+* save liked X posts to daily notes ([#1288](https://github.com/team-reflect/reflect-open/issues/1288)) ([0bcf272](https://github.com/team-reflect/reflect-open/commit/0bcf2724b9239b9e2a21df5e09116999fc12de00))
+
+## [0.12.0-beta.8](https://github.com/team-reflect/reflect-open/compare/v0.12.0-beta.7...v0.12.0-beta.8) (2026-09-16)
+
+
+### Features
+
+* **mobile:** add in-app offer code redemption ([#1294](https://github.com/team-reflect/reflect-open/issues/1294)) ([26c8732](https://github.com/team-reflect/reflect-open/commit/26c87322fe9d0772cd2b86822008eff21f256465))
+
+## [0.12.0-beta.7](https://github.com/team-reflect/reflect-open/compare/v0.12.0-beta.6...v0.12.0-beta.7) (2026-09-16)
+
+
+### Bug Fixes
+
+* **mobile:** give StoreKit entitlement lookups 15 s and one retry ([#1293](https://github.com/team-reflect/reflect-open/issues/1293)) ([ae04441](https://github.com/team-reflect/reflect-open/commit/ae044410f720fd44a951c8499fc3e32c07b33fc9))
+* **mobile:** sync with the App Store before reading entitlements on restore ([#1292](https://github.com/team-reflect/reflect-open/issues/1292)) ([33db791](https://github.com/team-reflect/reflect-open/commit/33db791ab389f698fa4cb73c52e35d254f43e7e6))
+* update meowdown to ^0.71.2 ([#1275](https://github.com/team-reflect/reflect-open/issues/1275)) ([b00a870](https://github.com/team-reflect/reflect-open/commit/b00a8703a3260015ed6e733e343e4f72df0b63e4))
+* update post-embed and meowdown ([#1289](https://github.com/team-reflect/reflect-open/issues/1289)) ([5e7b4cc](https://github.com/team-reflect/reflect-open/commit/5e7b4ccf9422cfc2ddc523eeb72ec13550a4ae7b))
+
+## [0.12.0-beta.6](https://github.com/team-reflect/reflect-open/compare/v0.12.0-beta.5...v0.12.0-beta.6) (2026-09-14)
+
+
+### Features
+
+* **extension:** move the X bookmark switch to an options page ([#1285](https://github.com/team-reflect/reflect-open/issues/1285)) ([f19b134](https://github.com/team-reflect/reflect-open/commit/f19b1341c6b6d15d5b08611eea8b9327eb7fb006))
+* save X posts and media for offline reading ([#1284](https://github.com/team-reflect/reflect-open/issues/1284)) ([b72a93c](https://github.com/team-reflect/reflect-open/commit/b72a93cb153ed00362f0efe9f811ee9147da1e43))
+
+
+### Bug Fixes
+
+* **mobile:** avoid loading flashes on first tab switch ([#1271](https://github.com/team-reflect/reflect-open/issues/1271)) ([0dfe0b1](https://github.com/team-reflect/reflect-open/commit/0dfe0b15899c033e801b883c5c782b464d6703f4))
+* update meowdown to ^0.70.0 ([#1273](https://github.com/team-reflect/reflect-open/issues/1273)) ([11ffb9d](https://github.com/team-reflect/reflect-open/commit/11ffb9d8f627a6f42d04a4aefa83c1cb92908c79))
+
+## [0.12.0-beta.5](https://github.com/team-reflect/reflect-open/compare/v0.12.0-beta.4...v0.12.0-beta.5) (2026-09-12)
+
+
+### Features
+
+* add transcription helper text for audio memos ([#1264](https://github.com/team-reflect/reflect-open/issues/1264)) ([d2d8cd5](https://github.com/team-reflect/reflect-open/commit/d2d8cd53e28880fa1a5500c0817d091afd7afe76))
+* save X bookmark links directly to daily notes ([#1253](https://github.com/team-reflect/reflect-open/issues/1253)) ([4cf833c](https://github.com/team-reflect/reflect-open/commit/4cf833cbbd88507d667ee4ba665df718e3c7677c))
+
+
+### Bug Fixes
+
+* render chat replies as markdown while streaming ([#1259](https://github.com/team-reflect/reflect-open/issues/1259)) ([1181f0e](https://github.com/team-reflect/reflect-open/commit/1181f0eb38c916d2c86d6184402bbb46d59393e9))
+* update meowdown to ^0.68.3 ([#1262](https://github.com/team-reflect/reflect-open/issues/1262)) ([27b45fe](https://github.com/team-reflect/reflect-open/commit/27b45fef4735bb7e80f3aa775f9a77bf3d03b2f3))
+* update meowdown to ^0.69.0 ([#1267](https://github.com/team-reflect/reflect-open/issues/1267)) ([c054879](https://github.com/team-reflect/reflect-open/commit/c05487918d7941c860fa1dcd3adb3faef4210282))
+
 ## [0.12.0-beta.4](https://github.com/team-reflect/reflect-open/compare/v0.12.0-beta.3...v0.12.0-beta.4) (2026-09-10)
 
 

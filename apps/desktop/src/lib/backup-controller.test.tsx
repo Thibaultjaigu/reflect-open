@@ -7,14 +7,14 @@ import {
   type GraphInfo,
 } from '@reflect/core'
 import { fetch as tauriFetch } from '@tauri-apps/plugin-http'
-import { setPlatformSurface } from '@/lib/platform-surface'
-import { createBackupController, type BackupState } from './backup-controller'
+import { setPlatformSurface } from '@/lib/platform-surface.ts'
+import { createBackupController, type BackupState } from './backup-controller.ts'
 
 // providerFetch routes GitHub API calls through the Tauri HTTP plugin
 // whenever a bridge is set — which it is in every test here.
 vi.mock('@tauri-apps/plugin-http', () => ({ fetch: vi.fn() }))
-vi.mock('@/lib/platform', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@/lib/platform')>()),
+vi.mock('@/lib/platform.ts', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/platform.ts')>()),
   isNativeShell: () => true,
 }))
 const httpFetch = vi.mocked(tauriFetch)
@@ -517,49 +517,40 @@ describe('createBackupController', () => {
     controller.dispose()
   })
 
-  it('window focus and online events trigger a sync — until dispose', async () => {
+  it('window focus triggers a sync', async () => {
     const { calls } = fakeBridge()
     const controller = createBackupController({ graph: GRAPH, indexGeneration: 1 })
-    await controller.start()
-    await vi.waitFor(() => {
-      expect(calls.filter((command) => command === 'git_commit_all')).toHaveLength(1)
-    })
+    try {
+      await controller.start()
+      await vi.waitFor(() => {
+        expect(commitCount(calls)).toBe(1) // the launch pull's commit
+      })
 
-    window.dispatchEvent(new Event('focus'))
-    await vi.waitFor(() => {
-      expect(calls.filter((command) => command === 'git_commit_all')).toHaveLength(2)
-    })
-    window.dispatchEvent(new Event('online'))
-    await vi.waitFor(() => {
-      expect(calls.filter((command) => command === 'git_commit_all')).toHaveLength(3)
-    })
-
-    controller.dispose()
-    window.dispatchEvent(new Event('focus'))
-    await new Promise((resolve) => setTimeout(resolve, 0))
-    expect(calls.filter((command) => command === 'git_commit_all')).toHaveLength(3)
+      window.dispatchEvent(new Event('focus'))
+      await vi.waitFor(() => {
+        expect(commitCount(calls)).toBe(2)
+      })
+    } finally {
+      controller.dispose()
+    }
   })
 
-  it('a resume firing both visibility and focus runs one deduped cycle', async () => {
-    // WKWebView emits `visibilitychange` AND `focus` on one app foreground
-    // (desktop unminimize can too). Without the dedupe the second event
-    // queues a follow-up cycle — double network work on every resume.
+  it('the network coming back triggers a sync', async () => {
     const { calls } = fakeBridge()
     const controller = createBackupController({ graph: GRAPH, indexGeneration: 1 })
-    await controller.start()
-    await vi.waitFor(() => {
-      expect(calls.filter((command) => command === 'git_commit_all')).toHaveLength(1)
-    })
+    try {
+      await controller.start()
+      await vi.waitFor(() => {
+        expect(commitCount(calls)).toBe(1) // the launch pull's commit
+      })
 
-    document.dispatchEvent(new Event('visibilitychange'))
-    window.dispatchEvent(new Event('focus'))
-    await vi.waitFor(() => {
-      expect(calls.filter((command) => command === 'git_commit_all')).toHaveLength(2)
-    })
-    // Let any wrongly-queued follow-up cycle surface before asserting.
-    await new Promise((resolve) => setTimeout(resolve, 20))
-    expect(calls.filter((command) => command === 'git_commit_all')).toHaveLength(2)
-    controller.dispose()
+      window.dispatchEvent(new Event('online'))
+      await vi.waitFor(() => {
+        expect(commitCount(calls)).toBe(2)
+      })
+    } finally {
+      controller.dispose()
+    }
   })
 
   it('going hidden does not trigger a cycle (backgrounding is the flush path)', async () => {

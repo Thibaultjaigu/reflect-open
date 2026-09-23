@@ -2,9 +2,9 @@ import { renderHook } from 'vitest-browser-react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const setWindowTitle = vi.hoisted(() => vi.fn())
-vi.mock('@/lib/windows/window-title', () => ({ setWindowTitle }))
+vi.mock('@/lib/windows/window-title.ts', () => ({ setWindowTitle }))
 
-import { useNoteWindowTitle } from './use-note-window-title'
+import { useNoteWindowTitle } from './use-note-window-title.ts'
 
 beforeEach(() => {
   vi.clearAllMocks()

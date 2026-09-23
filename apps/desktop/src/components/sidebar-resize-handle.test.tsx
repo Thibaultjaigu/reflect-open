@@ -1,15 +1,15 @@
 import { cleanup, render } from 'vitest-browser-react'
 import { page } from 'vitest/browser'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { activeSidebarWidthDrags } from '@/hooks/use-sidebar-resize'
-import { SidebarResizeHandle } from './sidebar-resize-handle'
+import { activeSidebarWidthDrags } from '@/hooks/use-sidebar-resize.ts'
+import { SidebarResizeHandle } from './sidebar-resize-handle.tsx'
 
 const settingsState = vi.hoisted(() => ({
   settings: { sidebarWidth: 260, contextSidebarWidth: 320 },
   updateSettings: vi.fn(),
 }))
 
-vi.mock('@/providers/settings-provider', () => ({
+vi.mock('@/providers/settings-provider.tsx', () => ({
   useSettings: () => settingsState,
 }))
 

@@ -1,21 +1,13 @@
-import {
-  IAP_PRODUCT_IDS,
-  indexedNoteSchema,
-  ReflectError,
-  type AppPlatform,
-  type IpcBridge,
-} from '@reflect/core'
+import { IAP_PRODUCT_IDS, indexedNoteSchema, ReflectError, type IpcBridge } from '@reflect/core'
 import { z } from 'zod'
-import type { DevFileStore } from '@/dev/dev-file-store'
-import type { DevIndexDb } from '@/dev/dev-index-db'
+import type { DevFileStore } from '@/dev/dev-file-store.ts'
+import type { DevIndexDb } from '@/dev/dev-index-db.ts'
 
 /** The fixed fake graph root the dev bridge reports (mirrors `mobile_storage`). */
 export const DEV_GRAPH_ROOT = '/dev-graph'
 
-/** Everything the command router needs; assembled by `installDevBridge`. */
+/** Everything the command router needs. */
 export interface DevBridgeBackend {
-  /** The platform `app_platform` reports (the `?platform=` override value). */
-  platform: AppPlatform
   files: DevFileStore
   index: DevIndexDb
 }
@@ -62,7 +54,6 @@ const iapProductArgsSchema = z.object({
 const iapProductsArgsSchema = z.object({
   payload: iapPayloadSchema.extend({ productIds: z.array(z.string()) }),
 })
-const iapRestoreArgsSchema = z.object({ payload: iapPayloadSchema })
 
 // Fixed preview prices, independent of App Store Connect and browser locale.
 const iapProducts = [
@@ -83,7 +74,7 @@ const iapProducts = [
  * error naming the gap.
  */
 export function createDevBridge(backend: DevBridgeBackend): IpcBridge {
-  const { platform, files, index } = backend
+  const { files, index } = backend
   const graphInfo = { root: DEV_GRAPH_ROOT, name: 'Dev Graph', generation: 1 }
   let settingsDocument: Record<string, unknown> = { mobileOnboarded: true }
   const assets = new Map<string, string>()
@@ -96,8 +87,6 @@ export function createDevBridge(backend: DevBridgeBackend): IpcBridge {
     switch (command) {
       case 'app_version':
         return '0.0.0-dev'
-      case 'app_platform':
-        return platform
       case 'background_task_begin':
         // Browser previews are never suspended like an iOS process, so the
         // native finite-length assertion is honestly unavailable.
@@ -106,6 +95,9 @@ export function createDevBridge(backend: DevBridgeBackend): IpcBridge {
         return null
       case 'plugin:app-store|get_environment':
         return { environment: 'Sandbox' }
+      case 'plugin:app-store|sync':
+      case 'plugin:app-store|present_offer_code_redeem_sheet':
+        return null
       case 'plugin:iap|get_products': {
         const { payload } = iapProductsArgsSchema.parse(args)
         return {
@@ -123,10 +115,6 @@ export function createDevBridge(backend: DevBridgeBackend): IpcBridge {
         }
         ownedProductId = payload.productId
         return null
-      }
-      case 'plugin:iap|restore_purchases': {
-        iapRestoreArgsSchema.parse(args)
-        return { purchases: ownedProductId === null ? [] : [{ productId: ownedProductId }] }
       }
       case 'mobile_storage':
         // No iCloud in a plain browser — the dev harness exercises the

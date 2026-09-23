@@ -2,9 +2,9 @@ import { render } from 'vitest-browser-react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ReactNode } from 'react'
-import { RouterProvider, useRouter } from '@/routing/router'
-import { expectLocatorToHaveCount } from '@/test-utils/expect'
-import { BacklinksPanel } from './backlinks-panel'
+import { RouterProvider, useRouter } from '@/routing/router.tsx'
+import { expectLocatorToHaveCount } from '@/test-utils/expect.ts'
+import { BacklinksPanel } from './backlinks-panel.tsx'
 
 const { getBacklinksWithContext, getBacklinksPage } = vi.hoisted(() => {
   const getBacklinksWithContext = vi.fn()
@@ -24,11 +24,11 @@ vi.mock('@reflect/core', async (importOriginal) => ({
   getBacklinksWithContext: getBacklinksPage,
   resolveOrCreateNoteWithTitle,
 }))
-vi.mock('@/providers/graph-provider', () => ({
+vi.mock('@/providers/graph-provider.tsx', () => ({
   useGraph: () => ({ graph: { root: '/g', name: 'g', generation: 1 } }),
 }))
-vi.mock('@/lib/windows/open-in-new-window', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@/lib/windows/open-in-new-window')>()),
+vi.mock('@/lib/windows/open-in-new-window.ts', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/windows/open-in-new-window.ts')>()),
   openRouteInNewWindow,
 }))
 
@@ -73,7 +73,7 @@ describe('BacklinksPanel', () => {
   it('surfaces a failed query as an alert instead of rendering nothing', async () => {
     getBacklinksWithContext.mockRejectedValue(new Error('index unavailable'))
     const view = await renderPanel('notes/roadmap.md')
-    await expect.element(view.getByRole('alert')).toHaveTextContent('Couldn’t load backlinks.')
+    await expect.element(view.getByRole('alert')).toMatchTextContent('Couldn’t load backlinks.')
     await view.unmount()
   })
 
@@ -111,10 +111,10 @@ describe('BacklinksPanel', () => {
     // The [[Roadmap]] source renders as a chip whose label is the bare target,
     // not the raw bracket syntax.
     const chip = view.getByTestId('wikilink')
-    await expect.element(chip).toHaveTextContent(/^Roadmap$/)
+    await expect.element(chip).toMatchTextContent(/^Roadmap$/)
 
     await chip.click()
-    await expect.element(view.getByTestId('route')).toHaveTextContent('notes/roadmap.md')
+    await expect.element(view.getByTestId('route')).toMatchTextContent('notes/roadmap.md')
     await view.unmount()
   })
 
@@ -154,7 +154,7 @@ describe('BacklinksPanel', () => {
     await expectLocatorToHaveCount(view.getByTestId('wikilink'), 3)
 
     await view.getByText('Meeting Notes').click()
-    await expect.element(view.getByTestId('route')).toHaveTextContent('notes/meeting.md')
+    await expect.element(view.getByTestId('route')).toMatchTextContent('notes/meeting.md')
     // A backlink tap must not request focus — on mobile that would raise the
     // keyboard mid-arrival; desktop autofocuses note arrivals on its own.
     await expect.element(view.getByTestId('route')).toHaveAttribute('data-focus', 'false')
@@ -181,7 +181,7 @@ describe('BacklinksPanel', () => {
         path: 'notes/meeting.md',
       }),
     )
-    await expect.element(view.getByTestId('route')).toHaveTextContent('"today"')
+    await expect.element(view.getByTestId('route')).toMatchTextContent('"today"')
     await view.unmount()
   })
 

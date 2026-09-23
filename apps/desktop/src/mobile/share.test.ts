@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 const shareMock = vi.fn<(data: ShareData) => Promise<void>>()
 const openSessionMock = vi.fn<(path: string) => { liveContent: () => string | null } | null>()
 
-vi.mock('@/editor/open-documents', () => ({
+vi.mock('@/editor/open-documents.ts', () => ({
   openSession: (path: string) => openSessionMock(path),
 }))
 
@@ -23,7 +23,7 @@ describe('shareNote', () => {
     openSessionMock.mockReturnValue({
       liveContent: () => '---\nid: abc123\n---\n# Meeting\n\nAgenda + the unsaved line.\n',
     })
-    const { shareNote } = await import('./share')
+    const { shareNote } = await import('./share.ts')
 
     await shareNote('notes/meeting-notes.md')
 
@@ -35,7 +35,7 @@ describe('shareNote', () => {
 
   it('shares the empty body when a ready note was cleared (not stale content)', async () => {
     openSessionMock.mockReturnValue({ liveContent: () => '' })
-    const { shareNote } = await import('./share')
+    const { shareNote } = await import('./share.ts')
 
     await shareNote('notes/meeting-notes.md')
 
@@ -46,7 +46,7 @@ describe('shareNote', () => {
     // liveContent() is null until load() lands; reading disk here would
     // require an await and break navigator.share's transient activation.
     openSessionMock.mockReturnValue({ liveContent: () => null })
-    const { shareNote } = await import('./share')
+    const { shareNote } = await import('./share.ts')
 
     await shareNote('notes/meeting-notes.md')
 

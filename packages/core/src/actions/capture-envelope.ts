@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { bookmarkEnvelopeSchema, bookmarkWireSchema } from './bookmark-envelope'
-export * from './bookmark-envelope'
+import { xPostEnvelopeSchema, xPostWireSchema } from './bookmark-envelope.ts'
+export * from './bookmark-envelope.ts'
 
 /**
  * The platform-agnostic capture envelope (Plan 11): the contract between
@@ -89,7 +89,7 @@ export const captureWireMessageSchema = z.object({
 
 export type CaptureWireMessage = z.infer<typeof captureWireMessageSchema>
 
-export const extensionCaptureWireSchema = z.union([bookmarkWireSchema, captureWireMessageSchema])
+export const extensionCaptureWireSchema = z.union([xPostWireSchema, captureWireMessageSchema])
 export type ExtensionCaptureWire = z.infer<typeof extensionCaptureWireSchema>
 
 /**
@@ -162,7 +162,7 @@ export type TextCaptureSource = z.infer<typeof textCaptureSourceSchema>
  * honored before the link shape gets a say.
  */
 export const inboxEnvelopeSchema = z.union([
-  bookmarkEnvelopeSchema,
+  xPostEnvelopeSchema,
   textCaptureEnvelopeSchema,
   captureEnvelopeSchema,
 ])

@@ -45,7 +45,7 @@ export {
   type SyncEngineOptions,
   type SyncErrorKind,
   type SyncStatus,
-} from '../sync'
+} from '../sync/index.ts'
 export {
   frontmatterSchema,
   gistFrontmatterSchema,
@@ -87,6 +87,7 @@ export {
   type ConflictSide,
   parseBody,
   displayNoteTitle,
+  documentLineEnding,
   wikiLinkTargetForTitle,
   scanInlineWikiLinks,
   scanInlineImages,
@@ -117,7 +118,7 @@ export {
   type Resolution,
   type WikiLookup,
   type AsyncWikiLookup,
-} from '../markdown'
+} from '../markdown/index.ts'
 export {
   openIndex,
   applyIndexedNote,
@@ -238,4 +239,4 @@ export {
   type RenameIo,
   type TitleRenameRewriteOptions,
   type TitleRenameRewriteResult,
-} from '../indexing'
+} from '../indexing/index.ts'

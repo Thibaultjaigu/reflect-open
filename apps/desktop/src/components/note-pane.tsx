@@ -7,36 +7,38 @@ import {
   isUntitledNotePath,
   untitledNoteSeed,
 } from '@reflect/core'
-import { BacklinksPanel } from '@/components/backlinks-panel'
-import { ConflictNoteView } from '@/components/conflict-note-view'
-import { InlineAlert } from '@/components/inline-alert'
-import { NoteConflictBanner } from '@/components/note-conflict-banner'
-import { ProtectedNoteView } from '@/components/protected-note-view'
-import { SuggestedContactCard } from '@/components/suggested-contact-card'
-import { SyncConflictNotice } from '@/components/sync-conflict-notice'
-import { EditorAiKeymap } from '@/editor/ai-menu/editor-ai-keymap'
-import { useEditorAiMenu } from '@/editor/ai-menu/use-editor-ai-menu'
-import { editorBodyWithDefaultBullet } from '@/editor/default-bullet'
+import { BacklinksPanel } from '@/components/backlinks-panel.tsx'
+import { ConflictNoteView } from '@/components/conflict-note-view.tsx'
+import { NoteLoading } from '@/components/note-loading.tsx'
+import { NoteOpenError } from '@/components/note-open-error.tsx'
+import { NoteSaveAlerts } from '@/components/note-save-alerts.tsx'
+import { ProtectedNoteView } from '@/components/protected-note-view.tsx'
+import { SuggestedContactCard } from '@/components/suggested-contact-card.tsx'
+import { SyncConflictNotice } from '@/components/sync-conflict-notice.tsx'
+import { EditorAiKeymap } from '@/editor/ai-menu/editor-ai-keymap.tsx'
+import { useEditorAiMenu } from '@/editor/ai-menu/use-editor-ai-menu.tsx'
+import { editorBodyWithDefaultBullet } from '@/editor/default-bullet.ts'
 import {
   registerNoteEditorHandle,
   unregisterNoteEditorHandle,
-} from '@/editor/editor-handle-registry'
-import { markModeFromSyntax } from '@/editor/mark-mode'
-import { NoteEditor, type NoteEditorHandle } from '@/editor/note-editor'
-import { resolveAssetFileLink, useAssetPersistence } from '@/editor/use-asset-persistence'
-import { useEditorAutocomplete } from '@/editor/use-editor-autocomplete'
-import { useNoteDocument } from '@/editor/use-note-document'
-import { useTagNavigation } from '@/editor/use-tag-navigation'
-import { useTemplateSlashItems } from '@/editor/use-template-slash-items'
-import { useMarkdownLinkNavigation } from '@/editor/use-markdown-link-navigation'
-import { useLinkPreview } from '@/editor/use-link-preview'
-import { useWikiLinkNavigation } from '@/editor/use-wiki-link-navigation'
-import { useWikiLinkHoverPreview } from '@/editor/use-wiki-link-hover-preview'
-import { isTouchEditorSurface } from '@/lib/platform-surface'
-import { cn } from '@/lib/utils'
-import { useGraph } from '@/providers/graph-provider'
-import { useNoteSearchQuery, useNoteSearchReport } from '@/providers/note-find-provider'
-import { useSettings } from '@/providers/settings-provider'
+} from '@/editor/editor-handle-registry.ts'
+import { markModeFromSyntax } from '@/editor/mark-mode.ts'
+import { NoteEditor, type NoteEditorHandle } from '@/editor/note-editor.tsx'
+import { resolveAssetFileLink, useAssetPersistence } from '@/editor/use-asset-persistence.ts'
+import { useEditorAutocomplete } from '@/editor/use-editor-autocomplete.ts'
+import { useNoteDocument } from '@/editor/use-note-document.ts'
+import { useTagNavigation } from '@/editor/use-tag-navigation.ts'
+import { useTemplateSlashItems } from '@/editor/use-template-slash-items.ts'
+import { useMarkdownLinkNavigation } from '@/editor/use-markdown-link-navigation.ts'
+import { useLinkPreview } from '@/editor/use-link-preview.ts'
+import { useWikiLinkNavigation } from '@/editor/use-wiki-link-navigation.ts'
+import { useWikiLinkHoverPreview } from '@/editor/use-wiki-link-hover-preview.tsx'
+import { useXPostPreload } from '@/editor/use-x-post-preload.ts'
+import { isTouchEditorSurface } from '@/lib/platform-surface.ts'
+import { cn } from '@/lib/utils.ts'
+import { useGraph } from '@/providers/graph-provider.tsx'
+import { useNoteSearchQuery, useNoteSearchReport } from '@/providers/note-find-provider.tsx'
+import { useSettings } from '@/providers/settings-provider.tsx'
 
 interface NotePaneProps {
   /** Graph-relative path of the note to edit. */
@@ -256,37 +258,21 @@ export function NotePaneComponent({
     }
   }, [dailyDate, onExitBoundary])
 
-  if (document.status === 'loading') {
-    // `reflect-note-loading` keeps the hint invisible for the first beat:
-    // local reads resolve in milliseconds, and the text flashing on every
-    // daily-stream row reads as flicker while the stream anchors.
-    return (
-      <div
-        className={cn(
-          'reflect-note-loading px-1 py-2 text-sm text-text-muted',
-          gutterClassName,
-          editorClassName,
-          className,
-        )}
-      >
-        Loading note…
-      </div>
-    )
+  const editorContent =
+    document.status === 'ready' && !document.protected ? document.initialContent : null
+  const xPostsReady = useXPostPreload(editorContent)
+
+  if (document.status === 'loading' || (editorContent !== null && !xPostsReady)) {
+    return <NoteLoading className={cn(gutterClassName, editorClassName, className)} />
   }
 
   if (document.status === 'error') {
     return (
-      <div
-        role="alert"
-        className={cn(
-          'px-1 py-2 text-sm text-red-500',
-          gutterClassName,
-          editorClassName,
-          className,
-        )}
-      >
-        Couldn’t open {path}: {document.error}
-      </div>
+      <NoteOpenError
+        path={path}
+        message={document.error}
+        className={cn(gutterClassName, editorClassName, className)}
+      />
     )
   }
 
@@ -322,23 +308,7 @@ export function NotePaneComponent({
   return (
     <div className={cn('relative', className)} aria-label={`Editing ${path}`}>
       <div className={gutterClassName}>
-        {document.error !== null ? (
-          <InlineAlert tone="error" className="mb-4">
-            Saving failed: {document.error}. Your edits are kept in the editor and the next
-            successful save will persist them.
-          </InlineAlert>
-        ) : null}
-
-        {saveError !== null ? (
-          <InlineAlert tone="error" className="mb-4">
-            Couldn’t save the {saveError.kind === 'image' ? 'pasted image' : 'file'}:{' '}
-            {saveError.message}. It was not added to the note.
-          </InlineAlert>
-        ) : null}
-
-        {document.conflict !== null ? (
-          <NoteConflictBanner onKeepMine={document.keepMine} onLoadTheirs={document.loadTheirs} />
-        ) : null}
+        <NoteSaveAlerts document={document} assetSaveError={saveError} />
 
         <SyncConflictNotice path={path} className="mb-4" />
 

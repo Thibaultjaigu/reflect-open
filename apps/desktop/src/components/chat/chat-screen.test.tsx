@@ -16,10 +16,10 @@ import {
   type Settings,
   type StreamChatOptions,
 } from '@reflect/core'
-import { TooltipProvider } from '@/components/ui/tooltip'
-import { ChatProvider, useChatSession } from '@/providers/chat-provider'
-import { RouterProvider, useRouter } from '@/routing/router'
-import { ChatScreen } from './chat-screen'
+import { TooltipProvider } from '@/components/ui/tooltip.tsx'
+import { ChatProvider, useChatSession } from '@/providers/chat-provider.tsx'
+import { RouterProvider, useRouter } from '@/routing/router.tsx'
+import { ChatScreen } from './chat-screen.tsx'
 
 /**
  * The chat view over a faked engine: the provider stack and screen are real,
@@ -53,8 +53,8 @@ vi.mock('@reflect/core', async (importOriginal) => ({
   resolveWikiTarget,
   loadChatGraphContext,
 }))
-vi.mock('@/lib/windows/open-in-new-window', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@/lib/windows/open-in-new-window')>()),
+vi.mock('@/lib/windows/open-in-new-window.ts', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/windows/open-in-new-window.ts')>()),
   openRouteInNewWindow,
 }))
 
@@ -65,7 +65,7 @@ const settingsState = vi.hoisted(() => ({
 }))
 // Stateful like the real provider: a chatModelSelection patch re-renders with
 // the new value, so picking a model in the UI applies instantly here too.
-vi.mock('@/providers/settings-provider', async () => {
+vi.mock('@/providers/settings-provider.tsx', async () => {
   const { useState } = await import('react')
   return {
     useSettings: () => {
@@ -89,11 +89,11 @@ vi.mock('@/providers/settings-provider', async () => {
 
 // No open index → the provider's persistence layer stays inert; these tests
 // cover the screen, chat-provider.test.tsx covers persistence.
-vi.mock('@/providers/graph-provider', () => ({
+vi.mock('@/providers/graph-provider.tsx', () => ({
   useGraph: () => ({ indexGeneration: null, graph: null }),
 }))
 
-vi.mock('@/lib/provider-fetch', () => ({ providerFetch: vi.fn() }))
+vi.mock('@/lib/provider-fetch.ts', () => ({ providerFetch: vi.fn() }))
 
 const GRAPH: GraphInfo = { root: '/graphs/test', name: 'test-graph', generation: 1 }
 
@@ -567,20 +567,20 @@ describe('ChatScreen', () => {
 
     nextChunk.resolve()
     const bold = view.getByRole('strong')
-    await expect.element(bold).toHaveTextContent('markdown')
+    await expect.element(bold).toMatchTextContent('markdown')
     const firstItem = view.getByText('First item', { exact: true })
     await expect.element(firstItem).toBeInTheDocument()
     expect(firstItem.element().closest('.prosemirror-flat-list')).not.toBeNull()
     await expect.element(view.getByText('Second item', { exact: true })).toBeInTheDocument()
-    await expect.element(view.getByRole('code')).toHaveTextContent('const answer = 42')
+    await expect.element(view.getByRole('code')).toMatchTextContent('const answer = 42')
     expect(view.getByRole('button', { name: 'Copy reply' }).query()).toBeNull()
 
     finish.resolve()
     await expect.element(view.getByRole('button', { name: 'Copy reply' })).toBeInTheDocument()
-    await expect.element(view.getByTestId('wikilink')).toHaveTextContent('Atlas')
+    await expect.element(view.getByTestId('wikilink')).toMatchTextContent('Atlas')
     expect(heading.element()).toBe(headingElement)
     expect(bold.element().tagName).toBe('STRONG')
-    await expect.element(view.getByRole('code')).toHaveTextContent('const answer = 42')
+    await expect.element(view.getByRole('code')).toMatchTextContent('const answer = 42')
   })
 
   it('rejects a second send fired before the first one has rendered', async () => {

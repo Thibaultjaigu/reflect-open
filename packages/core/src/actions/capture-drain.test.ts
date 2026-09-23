@@ -1,5 +1,9 @@
-import { drainCaptureInbox } from './capture-drain'
-import fixtures from './bookmark-envelope.fixtures.json'
+vi.mock('../x-archive', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../x-archive.ts')>()),
+  saveArchivedPost: vi.fn(async () => {}),
+}))
+import { drainCaptureInbox } from './capture-drain.ts'
+import fixtures from './bookmark-envelope.fixtures.json' with { type: 'json' }
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   addSpool,
@@ -17,8 +21,8 @@ import {
   spool,
   wireCaptureMocks,
   writeNoteMock,
-} from './capture-harness'
-import type { TextCaptureEnvelope } from './capture-envelope'
+} from './capture-harness.ts'
+import type { TextCaptureEnvelope } from './capture-envelope.ts'
 
 const ensureBacklinkTargetMock = vi.hoisted(() => vi.fn())
 
@@ -39,7 +43,7 @@ vi.mock('./meta-scrape', () => ({
   scrapePageMeta: vi.fn(),
 }))
 vi.mock('../ai/describe-page', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../ai/describe-page')>()),
+  ...(await importOriginal<typeof import('../ai/describe-page.ts')>()),
   describePage: vi.fn(),
 }))
 vi.mock('../secrets/keychain', () => ({
@@ -649,13 +653,13 @@ it('isolates a failed bookmark write from later page captures', async () => {
   const name = `${bookmark.id}.json`
   spool.set(name, { contents: JSON.stringify(bookmark), modifiedMs: -1 })
   addSpool(envelope())
-  const writeBookmark = vi.fn(async () => {
+  const writeXPost = vi.fn(async () => {
     throw new Error('Daily note busy')
   })
-  const outcome = await drainCaptureInbox({ generation: 3, writeBookmark })
+  const outcome = await drainCaptureInbox({ generation: 3, writeXPost })
   expect(outcome.drained).toBe(1)
   expect(outcome.invalid).toBe(0)
   expect(spool.has(name)).toBe(true)
-  expect(writeBookmark).toHaveBeenCalledTimes(1)
+  expect(writeXPost).toHaveBeenCalledTimes(1)
   expect(outcome.stopped?.message).toBe('Daily note busy')
 })

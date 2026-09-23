@@ -3,8 +3,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { renderHook } from 'vitest-browser-react'
 import type { ReactNode } from 'react'
 import type { RetrievalHit } from '@reflect/core'
-import { queryKeys } from './query-client'
-import { useSimilarNotes } from './use-similar-notes'
+import { queryKeys } from './query-client.ts'
+import { useSimilarNotes } from './use-similar-notes.ts'
 
 const relatedNotes = vi.hoisted(() => vi.fn())
 const readNote = vi.hoisted(() => vi.fn())
@@ -14,11 +14,11 @@ vi.mock('@reflect/core', async (importOriginal) => ({
   readNote,
   relatedNotes,
 }))
-vi.mock('@/providers/graph-provider', () => ({
+vi.mock('@/providers/graph-provider.tsx', () => ({
   useGraph: () => ({ graph: { root: '/g', name: 'g', generation: 1 } }),
 }))
 const semanticSetting = vi.hoisted(() => ({ enabled: true }))
-vi.mock('@/providers/settings-provider', () => ({
+vi.mock('@/providers/settings-provider.tsx', () => ({
   useSettings: () => ({
     settings: { semanticSearchEnabled: semanticSetting.enabled },
     updateSettings: () => {},

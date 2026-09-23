@@ -1,8 +1,8 @@
 import { render } from 'vitest-browser-react'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { setIndexProgress } from '@/lib/index-progress'
-import { publishKeyboardHeight } from '@/mobile/use-keyboard'
-import { IndexProgressPill } from './index-progress-pill'
+import { setIndexProgress } from '@/lib/index-progress.ts'
+import { publishKeyboardHeight } from '@/mobile/use-keyboard.ts'
+import { IndexProgressPill } from './index-progress-pill.tsx'
 
 /**
  * The "Preparing notes…" pill gates on the pass doing real work (`worked` =
@@ -29,7 +29,7 @@ describe('IndexProgressPill', () => {
   it('appears once a pass has actually read enough files (a first index)', async () => {
     setIndexProgress({ done: 160, total: 7_000, worked: 160 })
     const view = await render(<IndexProgressPill />)
-    await expect.element(view.getByRole('status')).toHaveTextContent('160 of 7,000')
+    await expect.element(view.getByRole('status')).toMatchTextContent('160 of 7,000')
   })
 
   it('stays hidden below the work threshold — a routine sync of a few notes', async () => {

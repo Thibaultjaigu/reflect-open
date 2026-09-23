@@ -3,10 +3,10 @@ import { render } from 'vitest-browser-react'
 import { page, userEvent } from 'vitest/browser'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ReactNode } from 'react'
-import { RouterProvider, useRouter } from '@/routing/router'
-import { expectLocatorToHaveCount } from '@/test-utils/expect'
-import '@/test-utils/locator'
-import { IncomingBacklinks } from './incoming-backlinks'
+import { RouterProvider, useRouter } from '@/routing/router.tsx'
+import { expectLocatorToHaveCount } from '@/test-utils/expect.ts'
+import '@/test-utils/locator.ts'
+import { IncomingBacklinks } from './incoming-backlinks.tsx'
 
 const { getBacklinksWithContext, getBacklinksPage } = vi.hoisted(() => {
   const getBacklinksWithContext = vi.fn()
@@ -23,7 +23,7 @@ vi.mock('@reflect/core', async (importOriginal) => ({
   hasBridge: () => true,
   getBacklinksWithContext: getBacklinksPage,
 }))
-vi.mock('@/providers/graph-provider', () => ({
+vi.mock('@/providers/graph-provider.tsx', () => ({
   useGraph: () => ({ graph: { root: '/g', name: 'g', generation: 1 } }),
 }))
 
@@ -67,7 +67,7 @@ describe('IncomingBacklinks', () => {
   it('surfaces a failed query as an alert instead of rendering nothing', async () => {
     getBacklinksWithContext.mockRejectedValue(new Error('index unavailable'))
     const view = await renderSection('daily/2026-07-02.md')
-    await expect.element(view.getByRole('alert')).toHaveTextContent('Couldn’t load backlinks.')
+    await expect.element(view.getByRole('alert')).toMatchTextContent('Couldn’t load backlinks.')
     await view.unmount()
   })
 
@@ -118,8 +118,8 @@ describe('IncomingBacklinks', () => {
     const view = await renderSection('notes/roadmap.md')
 
     await userEvent.click(view.getByText('June 1st, 2026'))
-    await expect.element(view.getByTestId('route')).toHaveTextContent('"kind":"daily"')
-    await expect.element(view.getByTestId('route')).toHaveTextContent('2026-06-01')
+    await expect.element(view.getByTestId('route')).toMatchTextContent('"kind":"daily"')
+    await expect.element(view.getByTestId('route')).toMatchTextContent('2026-06-01')
     // The daily surface stays mounted and swipes; no editor focus is raised.
     await expect.element(view.getByTestId('route')).toHaveAttribute('data-focus', 'false')
     await view.unmount()
@@ -138,7 +138,7 @@ describe('IncomingBacklinks', () => {
     const view = await renderSection('daily/2026-07-02.md')
 
     await userEvent.click(view.getByText('Meeting Notes'))
-    await expect.element(view.getByTestId('route')).toHaveTextContent('notes/meeting.md')
+    await expect.element(view.getByTestId('route')).toMatchTextContent('notes/meeting.md')
     // A backlink tap must not request focus — that would raise the keyboard
     // through the mobile stack animation.
     await expect.element(view.getByTestId('route')).toHaveAttribute('data-focus', 'false')

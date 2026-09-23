@@ -1,12 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { setBridge } from './bridge'
+import { setBridge } from './bridge.ts'
 import {
   iapGetProducts,
   iapIsOwned,
   iapPurchase,
-  iapRestorePurchases,
   subscribeIapPurchaseUpdated,
-} from './iap-plugin'
+} from './iap-plugin.ts'
 
 afterEach(() => {
   setBridge(null)
@@ -37,11 +36,6 @@ describe('iap plugin bindings', () => {
     expect(invoke).toHaveBeenCalledWith('plugin:iap|purchase', {
       payload: { productId: 'a', productType: 'subs' },
     })
-  })
-
-  it('restore_purchases reduces to the entitlement count', async () => {
-    bridgeReturning({ purchases: [{}, {}] })
-    await expect(iapRestorePurchases()).resolves.toBe(2)
   })
 
   it('get_product_status reduces to the isOwned flag', async () => {

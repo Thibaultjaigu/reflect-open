@@ -1,7 +1,7 @@
 import { browser } from 'wxt/browser'
 import type { ExtensionCaptureWire } from '@reflect/core/capture-envelope'
-import type { FlushResult } from './messages'
-import { sendToHost } from './native'
+import type { FlushResult } from './messages.ts'
+import { sendToHost } from './native.ts'
 import {
   QUEUE_CAP,
   queueKey,
@@ -9,7 +9,7 @@ import {
   queuedCaptureSchema,
   sortQueue,
   type QueuedCapture,
-} from './queue'
+} from './queue.ts'
 
 /** Background-owned queue admission and delivery; popup reads are read-only. */
 
@@ -36,10 +36,14 @@ let enqueueTail = Promise.resolve()
  * serialized so a full queue refuses the newcomer instead of evicting an
  * accepted capture.
  */
-export function enqueueCapture(wire: ExtensionCaptureWire): Promise<void> {
+export function enqueueCapture(
+  wire: ExtensionCaptureWire,
+  shouldAdmit?: () => Promise<boolean>,
+): Promise<void> {
   const next = enqueueTail.then(async () => {
     const entries = await readQueue()
     if (entries.some((entry) => entry.wire.envelope.id === wire.envelope.id)) return
+    if (shouldAdmit && !(await shouldAdmit())) return
     if (entries.length >= QUEUE_CAP) {
       throw new Error(
         'Capture queue full. Existing captures are kept; retry after they are delivered.',
@@ -101,7 +105,7 @@ async function runFlush(): Promise<FlushResult> {
         [queueKey(id)]: { ...entry, attempts: entry.attempts + 1 },
       })
       holdReason = outcome.reason
-      // Only a bookmark waits on a desktop update; page captures behind it still go.
+      // Only an X post waits on a desktop update; page captures behind it still go.
       if (outcome.reason !== 'unsupported-version') break
     }
   }

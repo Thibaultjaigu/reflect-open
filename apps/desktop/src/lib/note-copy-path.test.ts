@@ -7,9 +7,9 @@ const startOperation = vi.hoisted(() =>
   vi.fn(() => ({ progress: vi.fn(), done: operationDone, fail: operationFail })),
 )
 vi.mock('@tauri-apps/api/path', () => ({ join: joinPath }))
-vi.mock('@/lib/operations', () => ({ startOperation }))
+vi.mock('@/lib/operations.ts', () => ({ startOperation }))
 
-const { runCopyNotePath } = await import('./note-copy-path')
+const { runCopyNotePath } = await import('./note-copy-path.ts')
 
 function stubClipboard(writeText: (text: string) => Promise<void>): void {
   Object.defineProperty(navigator, 'clipboard', {

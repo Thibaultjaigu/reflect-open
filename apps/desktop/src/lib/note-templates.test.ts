@@ -21,15 +21,15 @@ vi.mock('@reflect/core', async (importOriginal) => ({
   availableTemplatePath,
   templateSlugPathForTitle,
 }))
-vi.mock('@/editor/move-note', () => ({ moveNoteCarryingSession }))
-vi.mock('@/editor/open-documents', () => ({ openSession }))
-vi.mock('@/lib/operations', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@/lib/operations')>()),
+vi.mock('@/editor/move-note.ts', () => ({ moveNoteCarryingSession }))
+vi.mock('@/editor/open-documents.ts', () => ({ openSession }))
+vi.mock('@/lib/operations.ts', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/operations.ts')>()),
   startOperation,
 }))
 
 const { createTemplate, insertTemplate, renameTemplate, templateBody } =
-  await import('./note-templates')
+  await import('./note-templates.ts')
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -93,7 +93,7 @@ describe('createTemplate', () => {
     expect(availableTemplatePath).toHaveBeenCalledWith('daily-review')
     expect(writeNote).toHaveBeenCalledWith(
       'templates/daily-review.md',
-      '---\ntitle: Daily Review\n---\n',
+      '---\ntitle: Daily Review\n---\n\n',
       7,
     )
   })

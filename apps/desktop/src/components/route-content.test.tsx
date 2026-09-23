@@ -4,14 +4,14 @@ import { page } from 'vitest/browser'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, type ReactElement } from 'react'
 import { setBridge, upsertFrontmatter } from '@reflect/core'
-import { PaletteProvider, usePalette } from '@/components/command-palette/palette-provider'
-import { flushOpenDocuments } from '@/editor/open-documents'
-import type { NoteEditorHandle } from '@/editor/note-editor'
-import { RouterProvider } from '@/routing/router'
-import type { Route } from '@/routing/route'
-import { setPlatformSurface } from '@/lib/platform-surface'
-import '@/test-utils/locator'
-import { RouteContent } from './route-content'
+import { PaletteProvider, usePalette } from '@/components/command-palette/palette-provider.tsx'
+import { flushOpenDocuments } from '@/editor/open-documents.ts'
+import type { NoteEditorHandle } from '@/editor/note-editor.tsx'
+import { RouterProvider } from '@/routing/router.tsx'
+import type { Route } from '@/routing/route.ts'
+import { setPlatformSurface } from '@/lib/platform-surface.ts'
+import '@/test-utils/locator.ts'
+import { RouteContent } from './route-content.tsx'
 
 /**
  * The route → view seam (Plan 06): non-daily notes must be just as editable as
@@ -26,7 +26,7 @@ const editorProbe = vi.hoisted(() => ({
   hoverRenderer: null as boolean | null,
 }))
 
-vi.mock('@/editor/note-editor', async () => {
+vi.mock('@/editor/note-editor.tsx', async () => {
   const { useEffect, useRef } = await import('react')
   return {
     NoteEditor: ({
@@ -91,13 +91,13 @@ vi.mock('@reflect/core', async (importOriginal) => ({
   getBacklinksWithContext: indexFns.getBacklinksWithContext,
   relatedNotes: indexFns.relatedNotes,
 }))
-vi.mock('@/providers/graph-provider', () => ({
+vi.mock('@/providers/graph-provider.tsx', () => ({
   useGraph: () => ({
     graph: { root: '/g', name: 'g', generation: 1 },
     indexing: false,
   }),
 }))
-vi.mock('@/providers/settings-provider', () => ({
+vi.mock('@/providers/settings-provider.tsx', () => ({
   useSettings: () => ({
     settings: {
       editorMarkdownSyntax: 'hide',
@@ -111,15 +111,15 @@ vi.mock('@/providers/settings-provider', () => ({
     updateSettingsWith: () => {},
   }),
 }))
-vi.mock('@/components/daily-stream', () => ({
+vi.mock('@/components/daily-stream.tsx', () => ({
   DailyStream: () => <div data-testid="daily-stream" />,
 }))
-vi.mock('@/components/settings-screen', () => ({
+vi.mock('@/components/settings-screen.tsx', () => ({
   SettingsScreen: () => <div data-testid="settings-screen" />,
 }))
 // The chat screen needs the ChatProvider stack (covered by its own tests);
 // here only the route → view mapping is under test.
-vi.mock('@/components/chat/chat-screen', () => ({
+vi.mock('@/components/chat/chat-screen.tsx', () => ({
   ChatScreen: () => <div data-testid="chat-screen" />,
 }))
 
@@ -205,7 +205,7 @@ describe('RouteContent', () => {
 
     await expect.element(page.getByLabelText('Editing notes/exist.md')).toBeVisible()
     await expect.element(page.getByTestId('daily-stream')).not.toBeInTheDocument()
-    await expect.element(page.getByTestId('fake-editor')).toHaveTextContent('# Hello')
+    await expect.element(page.getByTestId('fake-editor')).toMatchTextContent('# Hello')
     expect(editorProbe.hoverRenderer).toBe(true)
 
     // The navigated-to note takes focus on mount.
@@ -266,7 +266,7 @@ describe('RouteContent', () => {
 
     // The seed's header rides along: the file is born with its identity
     // (`id:` frontmatter, Plan 17) plus exactly what the user typed.
-    expect(files[NEW_NOTE_PATH]).toMatch(/^---\nid: [0-9a-z]{26}\n---\n# Manifesto\n$/)
+    expect(files[NEW_NOTE_PATH]).toMatch(/^---\nid: [0-9a-z]{26}\n---\n\n# Manifesto\n$/)
     await view.unmount()
   })
 

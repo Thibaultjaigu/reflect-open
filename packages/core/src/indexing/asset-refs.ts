@@ -1,4 +1,5 @@
-import { db } from './db'
+import { getXArchiveOwners } from '../x-archive.ts'
+import { db } from './db.ts'
 
 /**
  * Does an indexed reference name this file? A bare `![[photo.png]]` is stored
@@ -24,11 +25,21 @@ export function assetReferenceMatches(reference: string, assetPath: string): boo
  * embed stores; {@link assetReferenceMatches} re-applies the same rule to the
  * candidate's live markdown.
  */
-export async function assetReferencingNotePaths(assetPath: string): Promise<string[]> {
+export async function assetReferencingNotePaths(
+  assetPath: string,
+  knownOwners?: readonly string[],
+): Promise<string[]> {
+  const owners = knownOwners ?? (await getXArchiveOwners(assetPath))
   const basename = assetPath.split('/').at(-1) ?? assetPath
   const rows = await db
     .selectFrom('assets')
-    .where((eb) => eb.or([eb('assetPath', '=', assetPath), eb('assetPath', '=', basename)]))
+    .where((eb) =>
+      eb.or([
+        eb('assetPath', '=', assetPath),
+        eb('assetPath', '=', basename),
+        ...(owners.length > 0 ? [eb('assetPath', 'in', owners)] : []),
+      ]),
+    )
     .select('notePath')
     .distinct()
     .execute()

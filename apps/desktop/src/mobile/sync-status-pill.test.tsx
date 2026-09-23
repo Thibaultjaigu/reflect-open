@@ -3,9 +3,9 @@ import { cleanup, render } from 'vitest-browser-react'
 import { page } from 'vitest/browser'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { getConflictedNotes, type GraphInfo } from '@reflect/core'
-import type { BackupState } from '@/lib/backup-controller'
-import { publishKeyboardHeight } from '@/mobile/use-keyboard'
-import { SyncStatusPill } from './sync-status-pill'
+import type { BackupState } from '@/lib/backup-controller.ts'
+import { publishKeyboardHeight } from '@/mobile/use-keyboard.ts'
+import { SyncStatusPill } from './sync-status-pill.tsx'
 
 /**
  * The floating status pill (Plan 19, step 10): visible only when sync has
@@ -21,10 +21,10 @@ vi.mock('@reflect/core', async (importOriginal) => ({
 const graphState = vi.hoisted(() => ({
   graph: { root: '/g', name: 'G', generation: 3 } as GraphInfo | null,
 }))
-vi.mock('@/providers/graph-provider', () => ({ useGraph: () => graphState }))
+vi.mock('@/providers/graph-provider.tsx', () => ({ useGraph: () => graphState }))
 
 const sync = vi.hoisted(() => ({ backup: { phase: 'loading' } as BackupState }))
-vi.mock('@/providers/sync-provider', () => ({
+vi.mock('@/providers/sync-provider.tsx', () => ({
   useSyncContext: () => ({ backup: sync.backup }),
 }))
 
@@ -72,7 +72,7 @@ describe('SyncStatusPill', () => {
     sync.backup = connected({ state: 'syncing' })
     await mount()
 
-    await expect.element(page.getByRole('status')).toHaveTextContent('Syncing')
+    await expect.element(page.getByRole('status')).toMatchTextContent('Syncing')
   })
 
   it('claims nothing until the conflict count is known', async () => {
@@ -93,14 +93,14 @@ describe('SyncStatusPill', () => {
     vi.mocked(getConflictedNotes).mockRejectedValue(new Error('index unavailable'))
     await mount()
 
-    await expect.element(page.getByRole('status')).toHaveTextContent('Offline')
+    await expect.element(page.getByRole('status')).toMatchTextContent('Offline')
   })
 
   it('shows Needs review while conflicted notes exist', async () => {
     vi.mocked(getConflictedNotes).mockResolvedValue([{ path: 'notes/a.md', title: 'A' }])
     await mount()
 
-    await expect.element(page.getByRole('status')).toHaveTextContent('Needs review')
+    await expect.element(page.getByRole('status')).toMatchTextContent('Needs review')
   })
 
   it('yields to the software keyboard', async () => {

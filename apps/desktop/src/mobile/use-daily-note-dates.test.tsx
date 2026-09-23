@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, renderHook } from 'vitest-browser-react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ReactNode } from 'react'
-import { useDailyNoteDates } from './use-daily-note-dates'
+import { useDailyNoteDates } from './use-daily-note-dates.ts'
 
 const dailyDatesInRange = vi.hoisted(() =>
   vi.fn<(start: string, end: string) => Promise<string[]>>(),
@@ -14,7 +14,7 @@ vi.mock('@reflect/core', async (importOriginal) => ({
   hasBridge: () => true,
 }))
 
-vi.mock('@/providers/graph-provider', () => ({
+vi.mock('@/providers/graph-provider.tsx', () => ({
   useGraph: () => ({ graph: { root: '/g' } }),
 }))
 

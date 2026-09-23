@@ -50,6 +50,7 @@ permissions:
 jobs:
   testflight:
     name: Build and upload iOS
+    if: github.repository == 'team-reflect/reflect-open'
     runs-on: macos-26
     timeout-minutes: 120
     env:
@@ -79,14 +80,7 @@ jobs:
             exit 1
           fi
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
-
-      - name: Install Node
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: 22
-          cache: pnpm
+      - uses: ./.github/actions/setup-node
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@4be7066ada62dd38de10e7b70166bc74ed198c30 # stable
@@ -97,9 +91,6 @@ jobs:
         uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           cache-on-failure: true
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
 
       - name: Resolve build number
         id: build_number

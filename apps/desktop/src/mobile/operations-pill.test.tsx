@@ -2,10 +2,10 @@ import { act } from 'react'
 import { cleanup, render } from 'vitest-browser-react'
 import { page } from 'vitest/browser'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { resetOperations, startOperation, type OperationHandle } from '@/lib/operations'
-import { publishKeyboardHeight } from '@/mobile/use-keyboard'
-import { MobileOperationsPills } from './operations-pill'
-import { MobileStatusLayer } from './status-layer'
+import { resetOperations, startOperation, type OperationHandle } from '@/lib/operations.ts'
+import { publishKeyboardHeight } from '@/mobile/use-keyboard.ts'
+import { MobileOperationsPills } from './operations-pill.tsx'
+import { MobileStatusLayer } from './status-layer.tsx'
 
 /**
  * The mobile face of the operations store: failed/warning background work
@@ -15,7 +15,7 @@ import { MobileStatusLayer } from './status-layer'
 
 // The layer renders the sync pill too; keep it quiet so these tests only see
 // operation pills (its own behavior is covered in sync-status-pill.test.tsx).
-vi.mock('@/mobile/use-sync-status', () => ({ useMobileSyncStatus: () => null }))
+vi.mock('@/mobile/use-sync-status.ts', () => ({ useMobileSyncStatus: () => null }))
 
 beforeEach(() => {
   vi.useFakeTimers()
@@ -52,8 +52,8 @@ describe('MobileOperationsPills', () => {
     act(() => handle.fail('The note is busy.'))
 
     const pill = page.getByRole('alert')
-    await expect.element(pill).toHaveTextContent('Completing task')
-    await expect.element(pill).toHaveTextContent('The note is busy.')
+    await expect.element(pill).toMatchTextContent('Completing task')
+    await expect.element(pill).toMatchTextContent('The note is busy.')
   })
 
   it('shows a warning as a status pill', async () => {
@@ -61,7 +61,7 @@ describe('MobileOperationsPills', () => {
     const handle = operate(() => startOperation('Importing notes'))
     act(() => handle.warn('2 files skipped.'))
 
-    await expect.element(page.getByRole('status')).toHaveTextContent('2 files skipped.')
+    await expect.element(page.getByRole('status')).toMatchTextContent('2 files skipped.')
   })
 
   it('dismisses a pill on tap', async () => {

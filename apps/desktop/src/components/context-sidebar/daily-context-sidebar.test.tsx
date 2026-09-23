@@ -4,14 +4,14 @@ import { page, userEvent } from 'vitest/browser'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, type ReactNode } from 'react'
 import type { NoteRow } from '@reflect/core'
-import { TooltipProvider } from '@/components/ui/tooltip'
-import { formatDayLabel } from '@/lib/dates'
-import { monthLabel, monthOf } from '@/lib/month-grid'
-import type { NoteRoute } from '@/routing/route'
-import { RouterProvider, useRouter } from '@/routing/router'
-import { fireEvent } from '@/test-utils/fire-event'
-import '@/test-utils/locator'
-import { DailyContextSidebar } from './daily-context-sidebar'
+import { TooltipProvider } from '@/components/ui/tooltip.tsx'
+import { formatDayLabel } from '@/lib/dates.ts'
+import { monthLabel, monthOf } from '@/lib/month-grid.ts'
+import type { NoteRoute } from '@/routing/route.ts'
+import { RouterProvider, useRouter } from '@/routing/router.tsx'
+import { fireEvent } from '@/test-utils/fire-event.ts'
+import '@/test-utils/locator.ts'
+import { DailyContextSidebar } from './daily-context-sidebar.tsx'
 
 const dailyDatesInRange = vi.hoisted(() => vi.fn())
 const relatedNotes = vi.hoisted(() => vi.fn())
@@ -25,15 +25,15 @@ vi.mock('@reflect/core', async (importOriginal) => ({
   readNote,
   relatedNotes,
 }))
-vi.mock('@/hooks/use-note-row', () => ({ useNoteRow }))
-vi.mock('@/lib/windows/open-in-new-window', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@/lib/windows/open-in-new-window')>()),
+vi.mock('@/hooks/use-note-row.ts', () => ({ useNoteRow }))
+vi.mock('@/lib/windows/open-in-new-window.ts', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/windows/open-in-new-window.ts')>()),
   openRouteInNewWindow,
 }))
-vi.mock('@/providers/graph-provider', () => ({
+vi.mock('@/providers/graph-provider.tsx', () => ({
   useGraph: () => ({ graph: { root: '/g', name: 'g', generation: 1 } }),
 }))
-vi.mock('@/providers/settings-provider', () => ({
+vi.mock('@/providers/settings-provider.tsx', () => ({
   useSettings: () => ({
     settings: { semanticSearchEnabled: true, dateFormat: 'mdy', weekStartDay: 'monday' },
     updateSettings: () => {},
@@ -89,7 +89,7 @@ describe('DailyContextSidebar calendar header', () => {
   it('jumps to today from the calendar-icon button', async () => {
     const view = await renderSidebar('2026-06-09')
     await userEvent.click(page.getByRole('button', { name: 'Jump to today' }))
-    await expect.element(page.getByTestId('route')).toHaveTextContent('"kind":"today"')
+    await expect.element(page.getByTestId('route')).toMatchTextContent('"kind":"today"')
     await view.unmount()
   })
 })
@@ -104,7 +104,7 @@ describe('DailyContextSidebar calendar', () => {
     await expect.element(page.getByTestId('note-dot-2026-06-04')).not.toBeInTheDocument()
 
     await userEvent.click(page.getByRole('button', { name: formatDayLabel('2026-06-18', 'mdy') }))
-    await expect.element(page.getByTestId('route')).toHaveTextContent('2026-06-18')
+    await expect.element(page.getByTestId('route')).toMatchTextContent('2026-06-18')
     await view.unmount()
   })
 
@@ -123,7 +123,7 @@ describe('DailyContextSidebar calendar', () => {
     expect(openRouteInNewWindow).toHaveBeenCalledTimes(1)
     await expect
       .element(page.getByTestId('route'))
-      .toHaveTextContent(JSON.stringify({ kind: 'today' }))
+      .toMatchTextContent(JSON.stringify({ kind: 'today' }))
     await view.unmount()
   })
 
@@ -158,7 +158,7 @@ describe('DailyContextSidebar calendar', () => {
 
     await expect
       .element(page.getByTestId('route'))
-      .toHaveTextContent(JSON.stringify({ kind: 'today' }))
+      .toMatchTextContent(JSON.stringify({ kind: 'today' }))
     await view.unmount()
   })
 
@@ -228,7 +228,7 @@ describe('DailyContextSidebar related notes', () => {
     // tests pin the same title).
     await expect.element(page.getByText('Similar notes')).toBeVisible()
     await userEvent.click(page.getByText('Rust'))
-    await expect.element(page.getByTestId('route')).toHaveTextContent('notes/rust.md')
+    await expect.element(page.getByTestId('route')).toMatchTextContent('notes/rust.md')
     await view.unmount()
   })
 })

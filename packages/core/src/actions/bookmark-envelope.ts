@@ -1,39 +1,25 @@
+import { xPostSchema } from '../x-archive.ts'
+import { X_POST_ID_PATTERN } from '@post-embed/schema'
 import { z } from 'zod'
 
-export const postIdSchema = z.string().regex(/^[1-9]\d{0,19}$/)
+export const postIdSchema = z.string().regex(X_POST_ID_PATTERN)
 
-/** URL-only X bookmark capture; the desktop derives the permalink from `postId`. */
-export const bookmarkEnvelopeSchema = z
-  .object({
-    version: z.literal(2),
-    kind: z.literal('x-bookmark'),
-    id: z.guid(),
-    source: z.literal('extension'),
-    postId: postIdSchema,
-    capturedAt: z.iso.datetime({ offset: true }),
-  })
-  .strict()
-export type BookmarkEnvelope = z.infer<typeof bookmarkEnvelopeSchema>
+/** Capture metadata shared by snapshots and URL-only fallbacks. */
+const xPostMetadataSchema = z.object({
+  version: z.literal(2),
+  kind: z.enum(['x-bookmark', 'x-like']),
+  id: z.guid(),
+  source: z.literal('extension'),
+  capturedAt: z.iso.datetime({ offset: true }),
+})
 
-export const bookmarkWireSchema = z.object({ envelope: bookmarkEnvelopeSchema }).strict()
+/** A failed page lookup still preserves the post, without inventing post data. */
+export const xPostEnvelopeSchema = z.union([
+  xPostMetadataSchema.extend({ data: xPostSchema }),
+  xPostMetadataSchema.extend({ postId: postIdSchema, data: z.never().optional() }),
+])
 
-/** Normalize supported X permalink spellings to a post ID. */
-export function getBookmarkPostId(value: string): string | undefined {
-  try {
-    const url = new URL(value)
-    if (
-      url.protocol !== 'https:' ||
-      !['x.com', 'www.x.com', 'twitter.com', 'www.twitter.com'].includes(url.hostname) ||
-      url.port ||
-      url.username ||
-      url.password
-    )
-      return undefined
-    const match = /^\/(?:\w+|i\/web)\/status\/([1-9]\d{0,19})(?:\/(?:photo|video)\/\d+)?\/?$/.exec(
-      url.pathname,
-    )
-    return match?.[1]
-  } catch {
-    return undefined
-  }
-}
+export type XPostEnvelope = z.infer<typeof xPostEnvelopeSchema>
+export type XPostKind = XPostEnvelope['kind']
+
+export const xPostWireSchema = z.object({ envelope: xPostEnvelopeSchema }).strict()

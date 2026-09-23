@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ContactMatch } from '@reflect/core'
-import type { NoteSession } from '@/editor/note-session'
+import type { NoteSession } from '@/editor/note-session.ts'
 
 const readNote = vi.hoisted(() => vi.fn<(path: string) => Promise<string>>())
 const writeNote = vi.hoisted(() => vi.fn(async () => {}))
@@ -11,9 +11,9 @@ vi.mock('@reflect/core', async (importOriginal) => ({
   readNote,
   writeNote,
 }))
-vi.mock('@/editor/open-documents', () => ({ openSession }))
+vi.mock('@/editor/open-documents.ts', () => ({ openSession }))
 
-const { addContactToNote, ignoreContactSuggestion } = await import('./note-contact')
+const { addContactToNote, ignoreContactSuggestion } = await import('./note-contact.ts')
 
 const ADA: ContactMatch = {
   fullName: 'Ada Lovelace',
@@ -148,7 +148,7 @@ describe('ignoreContactSuggestion', () => {
 
     expect(writeNote).toHaveBeenCalledWith(
       'notes/Ada Lovelace.md',
-      '---\nignoredContacts:\n  - Grace Hopper\n  - Ada Lovelace\n---\n# Ada Lovelace\n',
+      '---\nignoredContacts:\n  - Grace Hopper\n  - Ada Lovelace\n---\n\n# Ada Lovelace\n',
       3,
     )
   })

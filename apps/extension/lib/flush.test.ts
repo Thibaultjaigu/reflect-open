@@ -1,10 +1,13 @@
 import { browser } from 'wxt/browser'
-import { bookmarkWireSchema } from '@reflect/core/capture-envelope'
-import fixtures from '../../../packages/core/src/actions/bookmark-envelope.fixtures.json'
+import {
+  xPostWireSchema,
+  type ExtensionCaptureWire,
+  type XPostKind,
+} from '@reflect/core/capture-envelope'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { CaptureWireMessage } from '@reflect/core/capture-envelope'
-import { enqueueCapture, flushQueue, readQueue } from './flush'
-import { sendToHost, type SendOutcome } from './native'
+import { enqueueCapture, flushQueue, readQueue } from './flush.ts'
+import { sendToHost, type SendOutcome } from './native.ts'
 
 /** In-memory `chrome.storage.local` faithful to get(null)/set/remove. */
 const store = new Map<string, unknown>()
@@ -153,8 +156,20 @@ describe('flushQueue', () => {
   })
 })
 
-const bookmark = bookmarkWireSchema.parse(fixtures.accepted[0])
-bookmark.envelope.id = FIRST
+function xPost(kind: XPostKind, id: string): ExtensionCaptureWire {
+  return xPostWireSchema.parse({
+    envelope: {
+      version: 2,
+      kind,
+      id,
+      postId: '20',
+      source: 'extension',
+      capturedAt: '2026-09-09T04:00:00Z',
+    },
+  })
+}
+
+const bookmark = xPost('x-bookmark', FIRST)
 
 it('holds a bookmark an old desktop cannot read without blocking page captures', async () => {
   await enqueueCapture(bookmark)
@@ -199,5 +214,26 @@ it('replays the same event after a lost ACK', async () => {
     bookmark.envelope.id,
     bookmark.envelope.id,
   ])
+  expect(await readQueue()).toEqual([])
+})
+
+it('retains a held like and still delivers a supported page capture', async () => {
+  const like = xPost('x-like', FIRST)
+  await enqueueCapture(like)
+  await enqueueCapture(wire(SECOND))
+  sendMock.mockResolvedValueOnce({
+    kind: 'held',
+    reason: 'unsupported-version',
+    message: 'Update Reflect',
+  })
+  const result = await flushQueue()
+  expect(result).toMatchObject({ sent: 1, held: 1, failed: 0, holdReason: 'unsupported-version' })
+  expect((await readQueue()).map((entry) => entry.wire.envelope.id)).toEqual([FIRST])
+})
+
+it('checks automatic admission policy inside the serialized queue operation', async () => {
+  const policy = vi.fn(async () => false)
+  await enqueueCapture(wire(FIRST), policy)
+  expect(policy).toHaveBeenCalledTimes(1)
   expect(await readQueue()).toEqual([])
 })

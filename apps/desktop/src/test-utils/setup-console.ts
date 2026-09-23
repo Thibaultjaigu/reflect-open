@@ -1,5 +1,5 @@
 import failOnConsole from 'vitest-fail-on-console'
-import { ALLOWED_CONSOLE_PATTERNS } from './allowed-console'
+import { ALLOWED_CONSOLE_PATTERNS } from './allowed-console.ts'
 
 failOnConsole({
   shouldFailOnWarn: true,

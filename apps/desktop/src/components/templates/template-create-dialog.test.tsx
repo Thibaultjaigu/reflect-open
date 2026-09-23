@@ -2,12 +2,12 @@ import type { ReactElement } from 'react'
 import { render } from 'vitest-browser-react'
 import { page } from 'vitest/browser'
 import { beforeEach, expect, it, vi } from 'vitest'
-import type { CommandContext } from '@/lib/commands/types'
-import { NoteTemplatesProvider, useNoteTemplates } from '@/providers/note-templates-provider'
-import { TemplateCreateDialog } from './template-create-dialog'
+import type { CommandContext } from '@/lib/commands/types.ts'
+import { NoteTemplatesProvider, useNoteTemplates } from '@/providers/note-templates-provider.tsx'
+import { TemplateCreateDialog } from './template-create-dialog.tsx'
 
 const { createTemplateMock } = vi.hoisted(() => ({ createTemplateMock: vi.fn() }))
-vi.mock('@/lib/note-templates', () => ({ createTemplate: createTemplateMock }))
+vi.mock('@/lib/note-templates.ts', () => ({ createTemplate: createTemplateMock }))
 
 function Opener(): ReactElement {
   const { openTemplateCreate } = useNoteTemplates()
@@ -81,7 +81,7 @@ it('drops the validation error between opens', async () => {
   await renderDialog()
   await openDialog()
   await page.getByRole('button', { name: 'Create' }).click()
-  await expect.element(page.getByRole('alert')).toHaveTextContent('Enter a name.')
+  await expect.element(page.getByRole('alert')).toMatchTextContent('Enter a name.')
   await closeAndWaitForExit()
 
   await openDialog()

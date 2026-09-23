@@ -1,10 +1,10 @@
 import { render } from 'vitest-browser-react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { EditorFullWidthEffect } from './editor-full-width'
+import { EditorFullWidthEffect } from './editor-full-width.tsx'
 
 const settingsState = vi.hoisted(() => ({ editorFullWidth: false }))
 
-vi.mock('@/providers/settings-provider', () => ({
+vi.mock('@/providers/settings-provider.tsx', () => ({
   useSettings: () => ({ settings: settingsState }),
 }))
 

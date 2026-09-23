@@ -3,29 +3,74 @@ import { openUrl } from '@tauri-apps/plugin-opener'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { page, userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
-import { dispatchDeepLink } from '@/lib/deep-links/intake'
-import { setPlatformSurface } from '@/lib/platform-surface'
-import { expectLocatorToHaveCount } from '@/test-utils/expect'
-import { pasteFiles } from '@/test-utils/file-events'
-import '@/test-utils/locator'
-import { hover, unhover } from '@/test-utils/mouse'
-import { NoteEditor, type NoteEditorHandle } from './note-editor'
+import { dispatchDeepLink } from '@/lib/deep-links/intake.ts'
+import { setPlatformSurface } from '@/lib/platform-surface.ts'
+import { expectLocatorToHaveCount } from '@/test-utils/expect.ts'
+import { pasteFiles } from '@/test-utils/file-events.ts'
+import '@/test-utils/locator.ts'
+import { hover, unhover } from '@/test-utils/mouse.ts'
+import type { XPost } from '@post-embed/types'
+import { NoteEditor, type NoteEditorHandle } from './note-editor.tsx'
 
 vi.mock('@tauri-apps/plugin-opener', () => ({
   openUrl: vi.fn(async () => {}),
 }))
 
-vi.mock('@/lib/deep-links/intake', () => ({
+vi.mock('@/lib/deep-links/intake.ts', () => ({
   dispatchDeepLink: vi.fn(),
 }))
 
 const openDeepLinkInNewWindow = vi.hoisted(() => vi.fn<() => Promise<boolean>>())
-vi.mock('@/lib/windows/open-in-new-window', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@/lib/windows/open-in-new-window')>()),
+vi.mock('@/lib/windows/open-in-new-window.ts', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/windows/open-in-new-window.ts')>()),
   openDeepLinkInNewWindow,
 }))
 
+// Media that loads without the network: the card hides a photo that fails.
+const X_PHOTO_URL =
+  "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='100'%20height='100'/%3E"
+const X_VIDEO_URL = 'data:video/mp4;base64,'
+
+vi.mock('@/editor/use-x-post-resolver.ts', () => ({
+  X_MEDIA_URL_PROTOCOLS: ['data:'],
+  useXPostResolver: () => (): XPost => ({
+    id: '20',
+    createdAt: '2006-03-21T20:50:14.000Z',
+    lang: 'en',
+    author: { name: 'jack', handle: 'jack' },
+    body: [{ type: 'text', text: 'just setting up my twttr' }],
+    media: [
+      { type: 'photo', url: X_PHOTO_URL, alt: 'A square', width: 100, height: 100 },
+      {
+        type: 'video',
+        width: 100,
+        height: 100,
+        sources: [{ type: 'video/mp4', url: X_VIDEO_URL }],
+      },
+    ],
+  }),
+}))
+
 const pmRoot = page.locate('.ProseMirror')
+
+// A saved snapshot, so the card renders without asking YouTube; it has no
+// thumbnail to load either.
+const YOUTUBE_NOTE = `![](https://www.youtube.com/watch?v=aqz-KE-bpKQ)<!-- ${JSON.stringify({
+  snapshot: {
+    kind: 'youtube-video',
+    data: {
+      url: 'https://www.youtube.com/watch?v=aqz-KE-bpKQ',
+      title: 'Big Buck Bunny',
+      author_name: 'Blender',
+      author_url: 'https://www.youtube.com/@Blender',
+      thumbnail_url: '',
+      thumbnail_width: 480,
+      thumbnail_height: 360,
+      width: 200,
+      height: 113,
+    },
+  },
+})} -->`
 
 const IMAGE_NOTE = 'A photo\n\n![Cat](assets/cat.png)'
 
@@ -93,8 +138,8 @@ describe('NoteEditor wiki-link chips', () => {
       />,
     )
     const chips = pmRoot.getByTestId('wikilink')
-    await expect.element(chips.first()).toHaveTextContent(/^Dad$/)
-    await expect.element(chips.last()).toHaveTextContent(/^Tim MacCaw$/)
+    await expect.element(chips.first()).toMatchTextContent(/^Dad$/)
+    await expect.element(chips.last()).toMatchTextContent(/^Tim MacCaw$/)
     await chips.first().click()
     expect(onWikiLinkClick).toHaveBeenCalledWith({
       target: 'Tim MacCaw // Dad',
@@ -332,6 +377,43 @@ describe('NoteEditor image lightbox', () => {
     await expectLocatorToHaveCount(page.getByRole('dialog'), 0, { timeout: 5_000 })
   })
 
+  it('opens an X post photo without the local image opener', async () => {
+    await render(<NoteEditor initialContent="![](https://x.com/jack/status/20)" />)
+
+    await pmRoot.locate('[data-media] img').click()
+    const dialog = page.getByRole('dialog', { name: 'Image preview' })
+    await expect.element(dialog.getByAltText('A square')).toHaveAttribute('src', X_PHOTO_URL)
+    await expectLocatorToHaveCount(page.getByRole('button', { name: 'Open' }), 0)
+  })
+
+  it('plays an X post video in the lightbox instead of the card', async () => {
+    await render(<NoteEditor initialContent="![](https://x.com/jack/status/20)" />)
+
+    await pmRoot.getByRole('button', { name: 'Play video' }).click()
+    const dialog = page.getByRole('dialog', { name: 'Video preview' })
+    await expect.element(dialog.locate('video source')).toHaveAttribute('src', X_VIDEO_URL)
+    await expectLocatorToHaveCount(pmRoot.locate('video'), 0)
+
+    await dialog.locate('video').click()
+    await expect.element(dialog).toBeVisible()
+    await dialog.getByRole('button', { name: 'Close', exact: true }).click()
+    await expectLocatorToHaveCount(page.getByRole('dialog'), 0)
+  })
+
+  it('plays a YouTube video in the lightbox instead of the card', async () => {
+    await render(<NoteEditor initialContent={YOUTUBE_NOTE} />)
+
+    await pmRoot.getByRole('button', { name: 'Play: Big Buck Bunny' }).click()
+    const dialog = page.getByRole('dialog', { name: 'Video preview' })
+    await expect
+      .element(dialog.getByTitle('Big Buck Bunny'))
+      .toHaveAttribute('src', 'https://youtube-relay-reflect.vercel.app/#v=aqz-KE-bpKQ')
+    await expectLocatorToHaveCount(pmRoot.locate('iframe'), 0)
+
+    await dialog.getByRole('button', { name: 'Close', exact: true }).click()
+    await expectLocatorToHaveCount(page.getByRole('dialog'), 0)
+  })
+
   it('uses the opener captured when the lightbox opens', async () => {
     const firstOpenImage = vi.fn(async () => {})
     const secondOpenImage = vi.fn(async () => {})
@@ -475,8 +557,8 @@ describe('NoteEditor file pills', () => {
     )
 
     const pill = pmRoot.getByTestId('file-pill')
-    await expect.element(pill).toHaveTextContent('report.pdf')
-    await expect.element(pmRoot.getByTestId('file-pill-size')).toHaveTextContent('1.4 MB')
+    await expect.element(pill).toMatchTextContent('report.pdf')
+    await expect.element(pmRoot.getByTestId('file-pill-size')).toMatchTextContent('1.4 MB')
   })
 
   it('leaves links as links when the host claims no file links', async () => {
@@ -522,7 +604,7 @@ describe('NoteEditor file paste', () => {
     const pasted = new File([new Uint8Array(4)], 'q3.pdf', { type: 'application/pdf' })
     pasteFiles(pmRoot.element(), [pasted])
 
-    await expect.element(pmRoot.getByTestId('file-pill')).toHaveTextContent('q3.pdf')
+    await expect.element(pmRoot.getByTestId('file-pill')).toMatchTextContent('q3.pdf')
     expect(saveFile).toHaveBeenCalledExactlyOnceWith(pasted)
     expect(handleRef.current?.getMarkdown()).toBe('[q3.pdf](assets/report.pdf)\n')
   })

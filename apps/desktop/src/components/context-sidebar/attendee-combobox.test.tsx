@@ -3,7 +3,7 @@ import { page, userEvent, type Locator } from 'vitest/browser'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ContactMatch, MeetingAttendee, WikiSuggestion } from '@reflect/core'
-import { AttendeeCombobox } from './attendee-combobox'
+import { AttendeeCombobox } from './attendee-combobox.tsx'
 
 const suggestWikiTargets = vi.hoisted(() => vi.fn<() => Promise<WikiSuggestion[]>>(async () => []))
 const contactLinkSuggestions = vi.hoisted(() =>
@@ -15,13 +15,13 @@ vi.mock('@reflect/core', async (importOriginal) => ({
   suggestWikiTargets,
   contactLinkSuggestions,
 }))
-vi.mock('@/providers/graph-provider', () => ({
+vi.mock('@/providers/graph-provider.tsx', () => ({
   useGraph: () => ({ graph: { root: '/g', name: 'g', generation: 1 } }),
 }))
-vi.mock('@/providers/settings-provider', () => ({
+vi.mock('@/providers/settings-provider.tsx', () => ({
   useSettings: () => ({ settings: { contactsEnabled: true }, updateSettings: () => {} }),
 }))
-vi.mock('@/hooks/use-contacts-authorization', () => ({
+vi.mock('@/hooks/use-contacts-authorization.ts', () => ({
   useContactsAuthorization: () => 'authorized',
 }))
 

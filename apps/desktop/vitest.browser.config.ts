@@ -1,7 +1,7 @@
 import tailwindcss from '@tailwindcss/vite'
 import { playwright } from '@vitest/browser-playwright'
 import { playwrightCommands } from 'vitest-browser-commands'
-import { defineDesktopProject } from './vitest.shared'
+import { defineDesktopProject } from './vitest.shared.ts'
 
 const browserName = process.env.REFLECT_TEST_BROWSER === 'webkit' ? 'webkit' : 'chromium'
 
@@ -21,6 +21,8 @@ export default defineDesktopProject({
     fileParallelism: false,
     browser: {
       enabled: true,
+      // Vitest 5 defaults locators.exact to true; keep v4 substring matching.
+      locators: { exact: false },
       viewport: { width: 900, height: 600 },
       provider: playwright({
         contextOptions: {

@@ -8,7 +8,7 @@ import type {
 import {
   createAssetDescribeController,
   type AssetDescribeController,
-} from './asset-describe-controller'
+} from './asset-describe-controller.ts'
 
 const reconcileAssetDescriptions = vi.hoisted(() =>
   vi.fn<(input: ReconcileAssetDescriptionsInput) => Promise<ReconcileAssetDescriptionsOutcome>>(),
@@ -31,13 +31,13 @@ vi.mock('@reflect/core', async (importOriginal) => ({
   reindexNotesReferencing,
   hasBridge: () => true,
 }))
-vi.mock('@/lib/provider-fetch', () => ({
+vi.mock('@/lib/provider-fetch.ts', () => ({
   providerFetch: vi.fn(),
 }))
-vi.mock('@/lib/operations', () => ({
+vi.mock('@/lib/operations.ts', () => ({
   startOperation: () => ({ progress: vi.fn(), done: vi.fn(), fail: failOperation }),
 }))
-vi.mock('@/lib/query-client', () => ({
+vi.mock('@/lib/query-client.ts', () => ({
   invalidateIndexQueries,
 }))
 

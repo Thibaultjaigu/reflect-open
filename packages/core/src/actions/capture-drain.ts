@@ -1,5 +1,6 @@
-import type { BookmarkEnvelope } from './bookmark-envelope'
-import { errorMessage, isAppError, toAppError } from '../errors'
+import { saveArchivedPost, createArchivedPost } from '../x-archive.ts'
+import type { XPostEnvelope } from './bookmark-envelope.ts'
+import { errorMessage, isAppError, toAppError } from '../errors.ts'
 import {
   captureInboxList,
   captureInboxRead,
@@ -8,33 +9,33 @@ import {
   promoteCaptureScreenshot,
   readNote,
   writeNote,
-} from '../graph/commands'
-import { dailyPath, notePath } from '../graph/paths'
-import { hashContent } from '../indexing/hash'
+} from '../graph/commands.ts'
+import { dailyPath, notePath } from '../graph/paths.ts'
+import { hashContent } from '../indexing/hash.ts'
 import {
   appendListItem,
   appendTaskUnderHeading,
   appendListItemUnderBacklinkedHeading,
   headingMatchesBacklinkedTitle,
   upgradeSectionHeadingBacklink,
-} from '../markdown/edit'
-import { parseNote } from '../markdown/extract'
-import { sectionEnd, topLevelHeadings } from '../markdown/heading-blocks'
-import { parseFrontmatter, splitFrontmatter } from '../markdown/frontmatter'
-import type { ReconcileStop } from './audio-memo'
-import { ensureBacklinkTarget } from './backlink-target'
+} from '../markdown/edit.ts'
+import { parseNote } from '../markdown/extract.ts'
+import { sectionEnd, topLevelHeadings } from '../markdown/heading-blocks.ts'
+import { parseFrontmatter, splitFrontmatter } from '../markdown/frontmatter.ts'
+import type { ReconcileStop } from './audio-memo.ts'
+import { ensureBacklinkTarget } from './backlink-target.ts'
 import {
   captureFromPath,
   captureIdentity,
   captureLocalDate,
   captureSpoolName,
   type CaptureIdentity,
-} from './capture-identity'
+} from './capture-identity.ts'
 import {
   inboxEnvelopeSchema,
   type InboxEnvelope,
   type TextCaptureEnvelope,
-} from './capture-envelope'
+} from './capture-envelope.ts'
 import {
   captureNoteMeta,
   captureNoteSource,
@@ -43,7 +44,7 @@ import {
   noteSource,
   retitleDailyEntry,
   type CaptureStatus,
-} from './capture-note'
+} from './capture-note.ts'
 
 /** The category note every captured-link section backlinks. */
 const LINKS_NOTE_TITLE = 'Links'
@@ -57,8 +58,8 @@ const ORPHAN_SPOOL_MAX_AGE_MS = 60 * 60 * 1000
 export interface DrainCaptureInboxInput {
   /** `GraphInfo.generation` — pins every read and write to the issuing graph. */
   generation: number
-  /** Appends a bookmark to the daily note at `path`, merging with a live editor when open. */
-  writeBookmark?: (envelope: BookmarkEnvelope, path: string) => Promise<void>
+  /** Appends an X post to the daily note at `path`, merging with a live editor when open. */
+  writeXPost?: (envelope: XPostEnvelope, path: string) => Promise<void>
   /** Abort gate, checked between spool files (graph switch / unmount). */
   isStale?: () => boolean
   /** Clock for the orphan sweep; injectable for tests. */
@@ -169,7 +170,7 @@ export async function drainCaptureInbox(
         first.modifiedMs - second.modifiedMs || first.path.localeCompare(second.path),
     )
 
-  let bookmarkStop: ReconcileStop | null = null
+  let xPostStop: ReconcileStop | null = null
   let drained = 0
   let deduped = 0
   let invalid = 0
@@ -196,13 +197,19 @@ export async function drainCaptureInbox(
         invalid += 1
         continue
       }
-      if (envelope.kind === 'x-bookmark') {
+      if (isXPost(envelope)) {
         try {
-          if (!input.writeBookmark) {
-            throw new Error('Bookmark writer is unavailable; update Reflect')
+          if (!input.writeXPost) {
+            throw new Error('X post writer is unavailable; update Reflect')
+          }
+          if (envelope.data) {
+            await saveArchivedPost(
+              input.generation,
+              createArchivedPost(envelope.data, envelope.capturedAt),
+            )
           }
           const daily = dailyPath(captureLocalDate(new Date(envelope.capturedAt)))
-          await input.writeBookmark(envelope, daily)
+          await input.writeXPost(envelope, daily)
           await captureInboxRemove(name, input.generation)
           drained += 1
         } catch (cause) {
@@ -210,7 +217,7 @@ export async function drainCaptureInbox(
             return outcome({ reason: 'stale', message: 'the graph session ended mid-pass' })
           }
           // Keep the spool; the next pass retries after the editor settles.
-          bookmarkStop ??= { reason: toAppError(cause).kind, message: errorMessage(cause) }
+          xPostStop ??= { reason: toAppError(cause).kind, message: errorMessage(cause) }
         }
         continue
       }
@@ -300,7 +307,11 @@ export async function drainCaptureInbox(
   } catch (cause) {
     return outcome({ reason: toAppError(cause).kind, message: errorMessage(cause) })
   }
-  return outcome(bookmarkStop)
+  return outcome(xPostStop)
+}
+
+function isXPost(envelope: InboxEnvelope): envelope is XPostEnvelope {
+  return envelope.kind === 'x-bookmark' || envelope.kind === 'x-like'
 }
 
 function parseEnvelope(raw: string): InboxEnvelope | null {

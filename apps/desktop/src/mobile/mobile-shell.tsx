@@ -1,13 +1,17 @@
-import { useEffect, useRef, useState, type ReactElement } from 'react'
-import { useDoubleTap } from '@/hooks/use-double-tap'
-import { MobileFormattingToolbar } from '@/mobile/formatting-toolbar'
-import { MobileStack } from '@/mobile/mobile-stack'
-import { MobileTabBar, tabRootFor, type MobileTab } from '@/mobile/mobile-tab-bar'
-import { EMPTY_ALL_NOTES_FILTERS, type AllNotesFilters } from '@/mobile/search-filters/filter-state'
-import { useKeyboardVisible } from '@/mobile/use-keyboard'
-import { useWakeToToday } from '@/mobile/use-wake-to-today'
-import { routesEqual, type Route } from '@/routing/route'
-import { useRouter } from '@/routing/router'
+import { Suspense, useEffect, useRef, useState, type ReactElement } from 'react'
+import { LoadingScreen } from '@/components/loading-screen.tsx'
+import { useDoubleTap } from '@/hooks/use-double-tap.ts'
+import { MobileFormattingToolbar } from '@/mobile/formatting-toolbar.tsx'
+import { MobileStack } from '@/mobile/mobile-stack.tsx'
+import { MobileTabBar, tabRootFor, type MobileTab } from '@/mobile/mobile-tab-bar.tsx'
+import {
+  EMPTY_ALL_NOTES_FILTERS,
+  type AllNotesFilters,
+} from '@/mobile/search-filters/filter-state.ts'
+import { useKeyboardVisible } from '@/mobile/use-keyboard.ts'
+import { useWakeToToday } from '@/mobile/use-wake-to-today.ts'
+import { routesEqual, type Route } from '@/routing/route.ts'
+import { useRouter } from '@/routing/router.tsx'
 
 type DailyRoute = Extract<Route, { kind: 'today' }> | Extract<Route, { kind: 'daily' }>
 
@@ -101,12 +105,15 @@ export function MobileShell(): ReactElement {
       style={{ height: 'calc(100dvh - var(--keyboard-height, 0px))' }}
     >
       <div className="min-h-0 flex-1">
-        <MobileStack
-          allQuery={allQuery}
-          onAllQueryChange={setAllQuery}
-          allFilters={allFilters}
-          onAllFiltersChange={setAllFilters}
-        />
+        {/* A stable boundary lets route transitions retain the current screen while lazy code loads. */}
+        <Suspense fallback={<LoadingScreen />}>
+          <MobileStack
+            allQuery={allQuery}
+            onAllQueryChange={setAllQuery}
+            allFilters={allFilters}
+            onAllFiltersChange={setAllFilters}
+          />
+        </Suspense>
       </div>
       {/* V1 lets the keyboard cover the tab bar; with the root shrunk it
           would ride above the keyboard instead, so it hides while typing.

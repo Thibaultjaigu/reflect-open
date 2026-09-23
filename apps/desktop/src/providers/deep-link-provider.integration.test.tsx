@@ -1,7 +1,7 @@
 import { render } from 'vitest-browser-react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { GraphInfo } from '@reflect/core'
-import { dispatchDeepLink, resetDeepLinkIntakeForTests } from '@/lib/deep-links/intake'
+import { dispatchDeepLink, resetDeepLinkIntakeForTests } from '@/lib/deep-links/intake.ts'
 
 const resolveNoteTarget = vi.hoisted(() => vi.fn())
 const captureInboxSpool = vi.hoisted(() => vi.fn(async () => {}))
@@ -20,14 +20,14 @@ vi.mock('@reflect/core', async (importOriginal) => ({
   resolveNoteTarget,
   captureInboxSpool,
 }))
-vi.mock('@/lib/operations', () => ({
+vi.mock('@/lib/operations.ts', () => ({
   startOperation: vi.fn(() => operationHandle),
 }))
-vi.mock('@/routing/router', () => ({
+vi.mock('@/routing/router.tsx', () => ({
   useRouter: () => ({ navigate, navigationRevision: () => navigation.revision }),
 }))
 
-import { DeepLinkProvider } from './deep-link-provider'
+import { DeepLinkProvider } from './deep-link-provider.tsx'
 
 const GRAPH: GraphInfo = { root: '/g', name: 'g', generation: 7 }
 

@@ -2,14 +2,14 @@ import { render } from 'vitest-browser-react'
 import { page } from 'vitest/browser'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { describe, expect, it, vi } from 'vitest'
-import { AgentsSection } from './agents-section'
+import { AgentsSection } from './agents-section.tsx'
 
 // A browser-mode module mock materializes value exports once, so the
 // off-macOS behavior needs its own file with the flag statically false
 // (see `agents-section.test.tsx` for the macOS suite).
-vi.mock('@/lib/platform', () => ({ isMacosDesktop: false, isNativeShell: () => false }))
+vi.mock('@/lib/platform.ts', () => ({ isMacosDesktop: false, isNativeShell: () => false }))
 
-vi.mock('@/providers/graph-provider', () => ({
+vi.mock('@/providers/graph-provider.tsx', () => ({
   useGraph: () => ({ graph: { root: '/graphs/Personal', name: 'Personal', generation: 7 } }),
 }))
 

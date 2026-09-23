@@ -3,8 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { renderHook } from 'vitest-browser-react'
 import type { ReactNode } from 'react'
 import type { NoteRow } from '@reflect/core'
-import { getNoteRowOverlay, resetNoteRowOverlays, setNoteRowOverlay } from './note-row-overlay'
-import { useNoteRow } from './use-note-row'
+import { getNoteRowOverlay, resetNoteRowOverlays, setNoteRowOverlay } from './note-row-overlay.ts'
+import { useNoteRow } from './use-note-row.ts'
 
 const GENERATION = 5
 
@@ -14,7 +14,7 @@ vi.mock('@reflect/core', async (importOriginal) => ({
   hasBridge: () => true,
   getNote,
 }))
-vi.mock('@/providers/graph-provider', () => ({
+vi.mock('@/providers/graph-provider.tsx', () => ({
   useGraph: () => ({ graph: { root: '/g', name: 'g', generation: GENERATION } }),
 }))
 

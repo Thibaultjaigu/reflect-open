@@ -10,10 +10,11 @@ import {
   type AiProvidersState,
   type ReconcileStop,
 } from '@reflect/core'
-import { commitBookmark } from '@/lib/bookmark-capture'
-import { createBackgroundReconciler } from '@/lib/background-reconciler'
-import { startOperation } from '@/lib/operations'
-import { providerFetch } from '@/lib/provider-fetch'
+import { commitXPost } from '@/lib/bookmark-capture.ts'
+import { createBackgroundReconciler } from '@/lib/background-reconciler.ts'
+import { startOperation } from '@/lib/operations.ts'
+import { providerFetch } from '@/lib/provider-fetch.ts'
+import { invalidateXPostQueries } from '@/lib/query-client.ts'
 
 /**
  * The link-capture lifecycle for one graph session. Built on
@@ -100,8 +101,10 @@ export function createCaptureController(options: CaptureControllerOptions): Capt
     const drained = await drainCaptureInbox({
       generation: options.generation,
       isStale,
-      writeBookmark: (envelope, path) => commitBookmark(envelope, path, options.generation),
+      writeXPost: (envelope, path) => commitXPost(envelope, path, options.generation),
     })
+    // A bookmark pass may have written X post archives, even when it stopped partway.
+    if (drained.drained > 0 || drained.stopped !== null) invalidateXPostQueries()
     surfaceStop('Saving link capture', drained.stopped)
     if (isStale()) {
       return

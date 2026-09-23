@@ -1,6 +1,6 @@
 import { renderHook } from 'vitest-browser-react'
 import { describe, expect, it, vi } from 'vitest'
-import type { NoteEditorHandle } from './note-editor'
+import type { NoteEditorHandle } from './note-editor.tsx'
 
 const listTemplates = vi.hoisted(() =>
   vi.fn(async () => [
@@ -15,12 +15,12 @@ vi.mock('@reflect/core', async (importOriginal) => ({
   listTemplates,
   hasBridge,
 }))
-vi.mock('@/lib/note-templates', () => ({ insertTemplate }))
-vi.mock('@/providers/graph-provider', () => ({
+vi.mock('@/lib/note-templates.ts', () => ({ insertTemplate }))
+vi.mock('@/providers/graph-provider.tsx', () => ({
   useGraph: () => ({ graph: { root: '/g', generation: 1 } }),
 }))
 
-const { useTemplateSlashItems } = await import('./use-template-slash-items')
+const { useTemplateSlashItems } = await import('./use-template-slash-items.ts')
 
 function fakeEditor(): NoteEditorHandle & { inserted: string[] } {
   const inserted: string[] = []
