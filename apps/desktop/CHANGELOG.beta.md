@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.14.0-beta.1](https://github.com/team-reflect/reflect-open/compare/v0.14.0-beta...v0.14.0-beta.1) (2026-09-23)
+
+
+### Bug Fixes
+
+* play YouTube videos through our relay to avoid Error 153 ([#1358](https://github.com/team-reflect/reflect-open/issues/1358)) ([35f8a05](https://github.com/team-reflect/reflect-open/commit/35f8a052a77df7fd6cddfc63e18593606511cb5c))
+
 ## [0.14.0-beta](https://github.com/team-reflect/reflect-open/compare/v0.13.0...v0.14.0-beta) (2026-09-23)
 
 
