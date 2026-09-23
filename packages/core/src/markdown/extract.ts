@@ -1,6 +1,6 @@
 import { parseXPostId } from '@post-embed/schema'
-import { headingMatchesBacklinkedTitle } from './heading-blocks.ts'
-import type { SyntaxNode } from '@meowdown/markdown'
+import { headingContentSpan, linkedHeadingTarget } from './heading-blocks.ts'
+import type { SyntaxNode, Tree } from '@meowdown/markdown'
 import { dateFromDailyPath, isAttachmentPath, isDaily } from '../graph/paths.ts'
 import { parseFrontmatter, splitFrontmatter } from './frontmatter.ts'
 import { parseBody } from './grammar.ts'
@@ -10,6 +10,7 @@ import { headingLevelOf } from './node-types.ts'
 import { buildPlainText, plainTextOfRange, unescapeMarkdownText } from './plain-text.ts'
 import { normalizeWikiTarget } from './resolve.ts'
 import { taskBreadcrumbs } from './task-breadcrumbs.ts'
+import { isTasksLabel } from './task-heading.ts'
 import { parseTaskMarker } from './task-marker.ts'
 import { isWikiNodeName, wikiBracketStart } from './wiki-nodes.ts'
 import type {
@@ -324,7 +325,8 @@ function readTask(
     (candidate) => candidate.topLevel && candidate.from < markerOffset,
   )
   const headingLabel =
-    heading === undefined || headingMatchesBacklinkedTitle(source, heading, wikiLinks, 'Tasks')
+    heading === undefined ||
+    isTasksLabel(linkedHeadingTarget(source, heading, wikiLinks) ?? heading.text)
       ? ''
       : plainTextOfRange(
           body,
@@ -336,7 +338,7 @@ function readTask(
   return {
     text: plainTextOfRange(body, from, lineEnd, cuts, literalRanges),
     breadcrumbs: [
-      ...(headingLabel === '' || headingLabel.toLowerCase() === 'tasks' ? [] : [headingLabel]),
+      ...(headingLabel === '' || isTasksLabel(headingLabel) ? [] : [headingLabel]),
       ...taskBreadcrumbs(body, taskNode, cuts, literalRanges),
     ],
     raw: body.slice(from, lineEnd),
@@ -425,6 +427,17 @@ function deriveTitle(frontmatter: Frontmatter, headings: Heading[], path: string
 
 /** Parse one note's full source into the stable {@link ParsedNote} contract. */
 export function parseNote(input: { path: string; source: string }): ParsedNote {
+  return parseNoteWithTree(input).note
+}
+
+interface ParsedNoteWithTree {
+  readonly note: ParsedNote
+  readonly tree: Tree
+  readonly bodyOffset: number
+}
+
+/** Parse a note once, retaining its body tree for structural source edits. */
+export function parseNoteWithTree(input: { path: string; source: string }): ParsedNoteWithTree {
   const { path, source } = input
   const { raw, body, bodyOffset } = splitFrontmatter(source)
   const { data: frontmatter, warning } = parseFrontmatter(raw)
@@ -487,6 +500,7 @@ export function parseNote(input: { path: string; source: string }): ParsedNote {
         headings.push({
           level: headingLevel,
           text,
+          content: headingContentSpan(node.node, bodyOffset),
           slug: slugify(text),
           topLevel,
           from: from + bodyOffset,
@@ -533,7 +547,7 @@ export function parseNote(input: { path: string; source: string }): ParsedNote {
     }
   }
 
-  return {
+  const note: ParsedNote = {
     path,
     id: stringField(frontmatter, 'id'),
     title: deriveTitle(frontmatter, headings, path),
@@ -547,4 +561,5 @@ export function parseNote(input: { path: string; source: string }): ParsedNote {
     tasks,
     displayText: buildPlainText(body, cuts, literalPlainText),
   }
+  return { note, tree, bodyOffset }
 }

@@ -1,13 +1,11 @@
-import type { SyntaxNode } from '@meowdown/markdown'
+import type { SyntaxNode, Tree } from '@meowdown/markdown'
 import {
   appendListItemAtHeading,
   insertListItemAtHeading,
   listItemBlock,
 } from './append-list-item.ts'
 import { appendHeadingSection } from './append-section.ts'
-import { parseNote } from './extract.ts'
-import { splitFrontmatter } from './frontmatter.ts'
-import { parseBody } from './grammar.ts'
+import { parseNote, parseNoteWithTree } from './extract.ts'
 import {
   headingMatchesBacklinkedTitle,
   linkedHeadingTarget,
@@ -15,7 +13,7 @@ import {
 } from './heading-blocks.ts'
 import { documentLineEnding, lineEndingAt, offsetBeforeLineEnding } from './line-endings.ts'
 import { isBulletList } from './node-types.ts'
-import type { Heading, TaskMarker, WikiLink } from './model.ts'
+import type { Heading, ParsedTask, TaskMarker, WikiLink } from './model.ts'
 import { normalizeWikiTarget } from './resolve.ts'
 import { scanInlineWikiLinks } from './scan.ts'
 import { parseTaskMarker } from './task-marker.ts'
@@ -53,12 +51,20 @@ export class TaskStaleError extends Error {
  * Throws {@link TaskStaleError} when `raw` matches no task, or more than one.
  */
 function locateTaskMarker(source: string, markerOffset: number, raw: string): number {
-  // Re-extract: the recorded offset is trusted only when it still holds a real
-  // parsed task with this line — a byte match alone isn't enough, since an edit
-  // above could have turned the line into (say) code without changing its bytes.
   const tasks = parseNote({ path: '', source }).tasks
-  if (tasks.some((task) => task.markerOffset === markerOffset && task.raw === raw)) {
-    return markerOffset
+  return locateParsedTask(tasks, markerOffset, raw).markerOffset
+}
+
+function locateParsedTask(
+  tasks: readonly ParsedTask[],
+  markerOffset: number,
+  raw: string,
+): ParsedTask {
+  // Trust an offset only when it still holds a parsed task; matching bytes may
+  // now belong to a code block after an edit above the line.
+  const exact = tasks.find((task) => task.markerOffset === markerOffset && task.raw === raw)
+  if (exact !== undefined) {
+    return exact
   }
   const matches = tasks.filter((task) => task.raw === raw)
   if (matches.length === 0) {
@@ -67,7 +73,7 @@ function locateTaskMarker(source: string, markerOffset: number, raw: string): nu
   if (matches.length > 1) {
     throw new TaskStaleError(`task line is ambiguous: ${JSON.stringify(raw)}`)
   }
-  return matches[0]!.markerOffset
+  return matches[0]!
 }
 
 /**
@@ -183,8 +189,8 @@ export function appendTaskUnderHeading(source: string, text = ''): TaskInsertion
   }
 }
 
-function taskNodeAt(body: string, markerOffset: number): SyntaxNode | null {
-  let node: SyntaxNode | null = parseBody(body).resolve(markerOffset, 1)
+function taskNodeAt(tree: Tree, markerOffset: number): SyntaxNode | null {
+  let node: SyntaxNode | null = tree.resolve(markerOffset, 1)
   while (node !== null && node.name !== 'Task') {
     node = node.parent
   }
@@ -204,6 +210,23 @@ function nearestParentListItem(taskNode: SyntaxNode): SyntaxNode | null {
   return null
 }
 
+function taskContextNode(tree: Tree, task: ParsedTask, bodyOffset: number): SyntaxNode | null {
+  const taskNode = taskNodeAt(tree, task.markerOffset - bodyOffset)
+  if (taskNode === null) {
+    return null
+  }
+  const parentItem = nearestParentListItem(taskNode)
+  if (parentItem !== null) {
+    return parentItem
+  }
+  const ownList = taskNode.parent?.parent
+  if (ownList == null || !isBulletList(ownList) || !ownList.parent?.type.isTop) {
+    return null
+  }
+  // At the document root, only a meaningful heading can supply breadcrumbs.
+  return task.breadcrumbs.length > 0 ? ownList : null
+}
+
 /**
  * Add an empty task to its nearest parent list item, or continue its top-level
  * list when a meaningful heading supplies the context. The new
@@ -221,23 +244,10 @@ export function appendTaskToContext(
   anchorOffset: number
   insertionOffset: number
 } {
-  const locatedOffset = locateTaskMarker(source, task.markerOffset, task.raw)
-  const { body, bodyOffset } = splitFrontmatter(source)
-  const taskNode = taskNodeAt(body, locatedOffset - bodyOffset)
-  const parentItem = taskNode === null ? null : nearestParentListItem(taskNode)
-  const ownList = taskNode?.parent?.parent
-  const taskHasHeading = parseNote({ path: '', source }).tasks.some(
-    (candidate) => candidate.markerOffset === locatedOffset && candidate.breadcrumbs.length > 0,
-  )
-  const contextItem =
-    parentItem ??
-    (taskHasHeading &&
-    ownList !== undefined &&
-    ownList !== null &&
-    isBulletList(ownList) &&
-    ownList.parent?.type.isTop
-      ? ownList
-      : null)
+  const { note, tree, bodyOffset } = parseNoteWithTree({ path: '', source })
+  const parsedTask = locateParsedTask(note.tasks, task.markerOffset, task.raw)
+  const locatedOffset = parsedTask.markerOffset
+  const contextItem = taskContextNode(tree, parsedTask, bodyOffset)
   if (contextItem === null) {
     throw new TaskStaleError('task no longer has a heading or parent list context')
   }

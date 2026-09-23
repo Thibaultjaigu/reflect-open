@@ -36,13 +36,21 @@ describe('visibleTaskBreadcrumbs', () => {
   })
 
   it('hides only the exact Tasks label regardless of casing or surrounding spaces', () => {
-    for (const heading of ['Tasks', ' tasks ', 'TASKS']) {
+    for (const heading of ['Tasks', ' tasks ', 'TASKS', '\tTaSkS\t']) {
       expect(visibleTaskBreadcrumbs([heading])).toEqual([])
     }
   })
 
   it('keeps other task-related labels meaningful', () => {
-    for (const heading of ['Task', 'Tasks:', 'todo', 'TODOs', 'To Do', "To Do's: "]) {
+    for (const heading of [
+      'Task',
+      'Tasks:',
+      'House tasks',
+      'todo',
+      'TODOs',
+      'To Do',
+      "To Do's: ",
+    ]) {
       expect(visibleTaskBreadcrumbs([heading])).toEqual([heading.trim()])
     }
   })

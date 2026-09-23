@@ -150,6 +150,8 @@ export interface MarkdownLink extends Span {
 export interface Heading extends Span {
   level: number
   text: string
+  /** Authored content excluding opening/closing heading marks, in original-file coordinates. */
+  content: Span
   /** GitHub-style slug for anchors + section chunking (Plan 09). */
   slug: string
   /**
@@ -214,8 +216,9 @@ export interface ParsedTask extends TaskMarker {
  * 1 — Plan 03 baseline · 2 — `tasks: ParsedTask[]` (with `dueDate`) added (Plan 18) ·
  * 3 — tasks limited to round Meowdown `+ [ ]` / `+ [x]` syntax; square checklist
  * checkboxes are excluded.
- * 4 — task rows carry parent outline/list breadcrumbs. */
-export const PARSED_NOTE_VERSION = 4
+ * 4 — task rows carry parent outline/list breadcrumbs.
+ * 5 — headings carry parser-derived content spans. */
+export const PARSED_NOTE_VERSION = 5
 
 /** The full parse of one note — the stable contract downstream plans depend on. */
 export interface ParsedNote {

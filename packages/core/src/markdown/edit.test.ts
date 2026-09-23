@@ -406,6 +406,36 @@ describe('appendTaskUnderHeading', () => {
 })
 
 describe('appendTaskToContext', () => {
+  it('relocates a unique anchor after content is inserted above it', () => {
+    const source = '## House chore\n\n+ [ ] first\n'
+    const task = parseNote({ path: 'notes/n.md', source }).tasks[0]!
+    const shifted = `Intro.\n\n${source}`
+    const inserted = appendTaskToContext(shifted, task)
+    expect(inserted.source).toBe(`${shifted}+ [ ] \n`)
+    expect(inserted.anchorOffset).toBe(shifted.indexOf('[ ]'))
+  })
+
+  it('refuses an ambiguous anchor when its recorded position is stale', () => {
+    const source = '## House chore\n\n+ [ ] first\n'
+    const task = parseNote({ path: 'notes/n.md', source }).tasks[0]!
+    const shifted = `Intro.\n\n${source}+ [ ] first\n`
+    expect(() => appendTaskToContext(shifted, task)).toThrow('task line is ambiguous')
+  })
+
+  it('uses the exact recorded anchor when another task has the same text', () => {
+    const source = '## Kitchen\n\n+ [ ] tidy\n\n## Garden\n\n+ [ ] tidy\n'
+    const task = parseNote({ path: 'notes/n.md', source }).tasks[1]!
+    expect(appendTaskToContext(source, task).source).toBe(`${source}+ [ ] \n`)
+  })
+
+  it('refuses an anchor whose unchanged marker now belongs to a code block', () => {
+    const source = '## House chore\n\n+ [ ] first\n'
+    const task = parseNote({ path: 'notes/n.md', source }).tasks[0]!
+    const fenced = source.replace('## House chore', '```           ') + '```\n'
+    expect(fenced.slice(task.markerOffset, task.markerOffset + task.raw.length)).toBe(task.raw)
+    expect(() => appendTaskToContext(fenced, task)).toThrow('task line no longer in note')
+  })
+
   it('adds a sibling at the end of a nested task context', () => {
     const source = [
       '+ StartupToolbox',

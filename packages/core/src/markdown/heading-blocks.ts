@@ -1,5 +1,17 @@
+import type { SyntaxNode } from '@meowdown/markdown'
 import { foldKey } from './keys.ts'
-import type { Heading, WikiLink } from './model.ts'
+import type { Heading, Span, WikiLink } from './model.ts'
+import { isHeaderMark } from './node-types.ts'
+
+/** Authored heading content, excluding syntax marks, in original-file coordinates. */
+export function headingContentSpan(node: SyntaxNode, bodyOffset: number): Span {
+  const first = node.firstChild
+  const last = node.lastChild
+  const from =
+    first !== null && isHeaderMark(first) && first.from === node.from ? first.to : node.from
+  const to = last !== null && isHeaderMark(last) && last.from >= from ? last.from : node.to
+  return { from: from + bodyOffset, to: to + bodyOffset }
+}
 
 /**
  * The headings that open a section: those `parseNote` saw as direct blocks of
@@ -29,22 +41,14 @@ export function linkedHeadingTarget(
   heading: Heading,
   wikiLinks: readonly WikiLink[],
 ): string | null {
-  const raw = source.slice(heading.from, heading.to)
-  const firstLine = raw.slice(0, !raw.includes('\n') ? raw.length : raw.indexOf('\n'))
-  const content = firstLine
-    .replace(/^[ \t]{0,3}#{1,6}[ \t]+/, '')
-    .replace(/[ \t]+#+[ \t]*$/, '')
-    .trim()
-  const match = /^\[\[\s*([^\]|\r\n]+?)\s*(?:\|[^\]\r\n]*)?\]\]$/.exec(content)
-  const textTarget = match?.[1]?.trim()
-  if (textTarget === undefined || textTarget === '') {
-    return null
-  }
+  const { content } = heading
   const parsedLink = wikiLinks.find(
     (link) =>
-      link.from >= heading.from &&
-      link.to <= heading.to &&
-      foldKey(link.target) === foldKey(textTarget),
+      link.target !== '' &&
+      link.from >= content.from &&
+      link.to <= content.to &&
+      source.slice(content.from, link.from).trim() === '' &&
+      source.slice(link.to, content.to).trim() === '',
   )
   return parsedLink?.target ?? null
 }

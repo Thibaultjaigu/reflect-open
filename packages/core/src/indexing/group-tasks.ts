@@ -1,4 +1,5 @@
 import { displayNoteTitle } from '../markdown/note-title.ts'
+import { isTasksLabel } from '../markdown/task-heading.ts'
 import type { OpenTask } from './queries.ts'
 
 /**
@@ -35,7 +36,7 @@ export interface TaskGroup {
 export function visibleTaskBreadcrumbs(breadcrumbs: readonly string[]): string[] {
   return breadcrumbs
     .map((text) => text.trim())
-    .filter((text) => text.length > 0 && !/^tasks$/i.test(text))
+    .filter((text) => text.length > 0 && !isTasksLabel(text))
 }
 
 /** One consecutive run of task rows sharing the same parent outline labels. */
