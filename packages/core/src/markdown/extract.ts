@@ -1,4 +1,5 @@
 import { parseXPostId } from '@post-embed/schema'
+import { headingMatchesBacklinkedTitle } from './heading-blocks.ts'
 import type { SyntaxNode } from '@meowdown/markdown'
 import { dateFromDailyPath, isAttachmentPath, isDaily } from '../graph/paths.ts'
 import { parseFrontmatter, splitFrontmatter } from './frontmatter.ts'
@@ -300,13 +301,15 @@ function lineEndAfter(body: string, from: number): number {
  * line verbatim from the marker onward for the write-back guard.
  */
 function readTask(
-  body: string,
+  source: string,
   taskNode: SyntaxNode,
   bodyOffset: number,
   cuts: Span[],
   literalRanges: Span[],
   wikiLinks: WikiLink[],
+  headings: readonly Heading[],
 ): ParsedTask | null {
+  const body = source.slice(bodyOffset)
   const { from, to } = taskNode
   if (!hasRoundTaskListMarker(body, from)) {
     return null
@@ -317,9 +320,25 @@ function readTask(
   }
   const lineEnd = lineEndAfter(body, from)
   const markerOffset = from + bodyOffset
+  const heading = headings.findLast(
+    (candidate) => candidate.topLevel && candidate.from < markerOffset,
+  )
+  const headingLabel =
+    heading === undefined || headingMatchesBacklinkedTitle(source, heading, wikiLinks, 'Tasks')
+      ? ''
+      : plainTextOfRange(
+          body,
+          heading.from - bodyOffset,
+          heading.to - bodyOffset,
+          cuts,
+          literalRanges,
+        )
   return {
     text: plainTextOfRange(body, from, lineEnd, cuts, literalRanges),
-    breadcrumbs: taskBreadcrumbs(body, taskNode, cuts, literalRanges),
+    breadcrumbs: [
+      ...(headingLabel === '' || headingLabel.toLowerCase() === 'tasks' ? [] : [headingLabel]),
+      ...taskBreadcrumbs(body, taskNode, cuts, literalRanges),
+    ],
     raw: body.slice(from, lineEnd),
     checked: marker.checked,
     markerOffset,
@@ -508,7 +527,7 @@ export function parseNote(input: { path: string; source: string }): ParsedNote {
 
   const tasks: ParsedTask[] = []
   for (const taskNode of taskNodes) {
-    const task = readTask(body, taskNode, bodyOffset, cuts, literalPlainText, wikiLinks)
+    const task = readTask(source, taskNode, bodyOffset, cuts, literalPlainText, wikiLinks, headings)
     if (task) {
       tasks.push(task)
     }

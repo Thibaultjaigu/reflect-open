@@ -268,6 +268,38 @@ describe('insertTask', () => {
 })
 
 describe('continueTaskInContext', () => {
+  it.each(['edited chore', ''])(
+    'continues a heading group while resolving draft %j',
+    async (content) => {
+      const source = '## House chore\n\n+ [ ] old\n+ [ ] peer\n\n## Tasks\n\n+ [x] later\n'
+      const original = parseNote({ path: 'notes/a.md', source }).tasks
+      const anchor = original[0]!
+      openSession.mockReturnValue(null)
+      readNote.mockResolvedValue(source)
+      writeNote.mockResolvedValue(undefined)
+
+      const result = await continueTaskInContext(
+        { notePath: 'notes/a.md', markerOffset: anchor.markerOffset, raw: anchor.raw },
+        content,
+        7,
+      )
+
+      const editedAnchor = content === '' ? '' : `+ [ ] ${content}\n`
+      const written = `## House chore\n\n${editedAnchor}+ [ ] peer\n+ [ ] \n\n## Tasks\n\n+ [x] later\n`
+      expect(writeNote).toHaveBeenCalledWith('notes/a.md', written, 7)
+      const writtenTasks = parseNote({ path: 'notes/a.md', source: written }).tasks
+      const created = writtenTasks.find((task) => task.markerOffset === result.created.markerOffset)
+      expect(created?.breadcrumbs).toEqual(['House chore'])
+      expect(created?.raw).toBe(result.created.raw)
+      const later = writtenTasks.at(-1)!
+      expect(result.offsetChanges.at(-1)).toEqual({
+        from: original.at(-1)!.markerOffset,
+        fromRaw: '[x] later',
+        marker: { markerOffset: later.markerOffset, raw: later.raw },
+      })
+    },
+  )
+
   it('saves an edited task and adds the next row to the same nested context', async () => {
     const source = [
       '+ StartupToolbox',

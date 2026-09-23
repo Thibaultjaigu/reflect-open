@@ -8,15 +8,20 @@ import { appendHeadingSection } from './append-section.ts'
 import { parseNote } from './extract.ts'
 import { splitFrontmatter } from './frontmatter.ts'
 import { parseBody } from './grammar.ts'
-import { topLevelHeadings } from './heading-blocks.ts'
-import { foldKey } from './keys.ts'
+import {
+  headingMatchesBacklinkedTitle,
+  linkedHeadingTarget,
+  topLevelHeadings,
+} from './heading-blocks.ts'
 import { documentLineEnding, lineEndingAt, offsetBeforeLineEnding } from './line-endings.ts'
+import { isBulletList } from './node-types.ts'
 import type { Heading, TaskMarker, WikiLink } from './model.ts'
 import { normalizeWikiTarget } from './resolve.ts'
 import { scanInlineWikiLinks } from './scan.ts'
 import { parseTaskMarker } from './task-marker.ts'
 
 export { appendBlock } from './append-section.ts'
+export { headingMatchesBacklinkedTitle } from './heading-blocks.ts'
 export { appendListItem, type ListItemKind } from './append-list-item.ts'
 
 /**
@@ -200,9 +205,10 @@ function nearestParentListItem(taskNode: SyntaxNode): SyntaxNode | null {
 }
 
 /**
- * Add an empty task to the end of `task`'s nearest parent-list context. The new
+ * Add an empty task to its nearest parent list item, or continue its top-level
+ * list when a meaningful heading supplies the context. The new
  * line reuses the task's exact indentation and round-list prefix, so parsing it
- * yields the same ancestor breadcrumbs. The indexed marker is relocated through
+ * yields the same heading and ancestor breadcrumbs. The indexed marker is relocated through
  * the normal stale guard first; a task that no longer has a parent context is
  * refused rather than silently appended at the note root.
  */
@@ -218,9 +224,22 @@ export function appendTaskToContext(
   const locatedOffset = locateTaskMarker(source, task.markerOffset, task.raw)
   const { body, bodyOffset } = splitFrontmatter(source)
   const taskNode = taskNodeAt(body, locatedOffset - bodyOffset)
-  const contextItem = taskNode === null ? null : nearestParentListItem(taskNode)
+  const parentItem = taskNode === null ? null : nearestParentListItem(taskNode)
+  const ownList = taskNode?.parent?.parent
+  const taskHasHeading = parseNote({ path: '', source }).tasks.some(
+    (candidate) => candidate.markerOffset === locatedOffset && candidate.breadcrumbs.length > 0,
+  )
+  const contextItem =
+    parentItem ??
+    (taskHasHeading &&
+    ownList !== undefined &&
+    ownList !== null &&
+    isBulletList(ownList) &&
+    ownList.parent?.type.isTop
+      ? ownList
+      : null)
   if (contextItem === null) {
-    throw new TaskStaleError('task no longer has a parent list context')
+    throw new TaskStaleError('task no longer has a heading or parent list context')
   }
 
   // Lezer's CRLF ranges end between `\r` and `\n`; splice before the pair so
@@ -335,46 +354,6 @@ export function appendListItemUnderHeading(
     return appendHeadingSection(source, heading, listItemBlock(content))
   }
   return appendListItemAtHeading(source, target, content)
-}
-
-/** The target when a heading consists entirely of one parsed wiki link. */
-function linkedHeadingTarget(
-  source: string,
-  heading: Heading,
-  wikiLinks: readonly WikiLink[],
-): string | null {
-  const raw = source.slice(heading.from, heading.to)
-  const firstLine = raw.slice(0, !raw.includes('\n') ? raw.length : raw.indexOf('\n'))
-  const content = firstLine
-    .replace(/^[ \t]{0,3}#{1,6}[ \t]+/, '')
-    .replace(/[ \t]+#+[ \t]*$/, '')
-    .trim()
-  const match = /^\[\[\s*([^\]|\r\n]+?)\s*(?:\|[^\]\r\n]*)?\]\]$/.exec(content)
-  const textTarget = match?.[1]?.trim()
-  if (textTarget === undefined || textTarget === '') {
-    return null
-  }
-  const parsedLink = wikiLinks.find(
-    (link) =>
-      link.from >= heading.from &&
-      link.to <= heading.to &&
-      foldKey(link.target) === foldKey(textTarget),
-  )
-  return parsedLink?.target ?? null
-}
-
-/**
- * Whether `heading` names `title` either as a linked heading (`## [[Links]]`)
- * or as the legacy plain form (`## Links`). A linked heading's target, rather
- * than its display alias, identifies the section.
- */
-export function headingMatchesBacklinkedTitle(
-  source: string,
-  heading: Heading,
-  wikiLinks: readonly WikiLink[],
-  title: string,
-): boolean {
-  return foldKey(linkedHeadingTarget(source, heading, wikiLinks) ?? heading.text) === foldKey(title)
 }
 
 function matchingBacklinkedHeading(

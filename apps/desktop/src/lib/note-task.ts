@@ -168,7 +168,7 @@ export function convertTaskToBullet(task: TaskRef, generation: number): Promise<
 
 /**
  * Continue entry from a grouped task by atomically resolving the current draft
- * and adding a new empty task to the same parent-list context. Changed content
+ * and adding a new empty task to the same heading or parent-list context. Changed content
  * replaces the anchor line; cleared content removes it. The returned marker
  * identities reflect the final source so the Tasks view can immediately address
  * the new row and relocate shifted cached rows before reindexing catches up.

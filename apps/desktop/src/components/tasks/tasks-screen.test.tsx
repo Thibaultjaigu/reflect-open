@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, render } from 'vitest-browser-react'
 import { userEvent, type Locator } from 'vitest/browser'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { OpenTask } from '@reflect/core'
+import { parseNote, type OpenTask } from '@reflect/core'
 import { act, useEffect, useState, type MutableRefObject, type ReactNode } from 'react'
 import { queryKeys } from '@/lib/query-client.ts'
 import { makeOpenTask as task } from '@/lib/tasks/open-task-fixture.ts'
@@ -389,20 +389,54 @@ describe('TasksScreen', () => {
     await view.unmount()
   })
 
-  it('hides a lone generic task breadcrumb', async () => {
+  it('groups by authored headings while omitting plain and linked Tasks headings', async () => {
+    const notePath = 'notes/p.md'
+    const note = parseNote({
+      path: notePath,
+      source:
+        '## Tasks\n\n+ [ ] buy milk\n\n## House chore\n\n+ [ ] tidy desk\n+ [ ] clean kitchen\n\n## [[Tasks]]\n\n+ [ ] return book\n\n## Todo\n\n+ [ ] renew subscription\n',
+    })
+    getOpenTasks.mockResolvedValue(
+      note.tasks.map((parsed) => task({ ...parsed, notePath, noteTitle: 'Project' })),
+    )
+    const view = await renderScreen()
+
+    const context = await view.findByRole('button', { name: 'House chore', exact: true })
+    expect(view.getAllByText('House chore', { exact: true })).toHaveLength(1)
+    expect(view.queryByText('Tasks', { exact: true })).toBeNull()
+    expect(view.queryByText('[[Tasks]]', { exact: true })).toBeNull()
+    expect(view.getByRole('button', { name: 'Todo', exact: true })).toBeDefined()
+    await userEvent.click(context)
+    expect(view.getByRole('button', { name: 'Convert to bullet 2' })).toBeDefined()
+    await view.unmount()
+  })
+
+  it('selects a heading context only within its source note in date buckets', async () => {
+    const notePath = 'notes/a.md'
+    const note = parseNote({
+      path: notePath,
+      source: '## House chore\n\n+ [ ] tidy desk\n+ [ ] clean kitchen\n',
+    })
+    const firstNoteTasks = note.tasks.map((parsed) =>
+      task({ ...parsed, notePath, noteTitle: 'A', dailyDate: '2026-06-14' }),
+    )
     getOpenTasks.mockResolvedValue([
+      ...firstNoteTasks,
       task({
-        notePath: 'notes/p.md',
-        markerOffset: 2,
-        text: 'project task',
-        noteTitle: 'Project',
-        breadcrumbs: ['Tasks:'],
+        notePath: 'notes/b.md',
+        noteTitle: 'B',
+        dailyDate: '2026-06-14',
+        text: 'water plants',
+        breadcrumbs: ['House chore'],
       }),
     ])
     const view = await renderScreen()
 
-    await view.findByText('project task')
-    expect(view.queryByText('Tasks:')).toBeNull()
+    await view.findByText('water plants')
+    const contexts = view.getAllByRole('button', { name: 'House chore', exact: true })
+    expect(contexts).toHaveLength(2)
+    await userEvent.click(contexts[0]!)
+    expect(view.getByRole('button', { name: 'Convert to bullet 2' })).toBeDefined()
     await view.unmount()
   })
 

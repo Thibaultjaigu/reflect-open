@@ -462,6 +462,52 @@ describe('appendTaskToContext', () => {
     expect(() => appendTaskToContext(source, task)).toThrow(TaskStaleError)
   })
 
+  it('continues a heading group within its list before prose and subheadings', () => {
+    const source =
+      '## House chore\n\n+ [ ] first\n  + [ ] nested\n+ [ ] peer\n\nprose\n\n### Garden\n\n+ [ ] later\n'
+    const task = parseNote({ path: 'notes/n.md', source }).tasks[0]!
+    const inserted = appendTaskToContext(source, task)
+    expect(inserted.source).toBe(
+      '## House chore\n\n+ [ ] first\n  + [ ] nested\n+ [ ] peer\n+ [ ] \n\nprose\n\n### Garden\n\n+ [ ] later\n',
+    )
+    const created = parseNote({ path: 'notes/n.md', source: inserted.source }).tasks.find(
+      (candidate) => candidate.markerOffset === inserted.markerOffset,
+    )
+    expect(created?.breadcrumbs).toEqual(['House chore'])
+  })
+
+  it('retains parent-list continuation within a heading group', () => {
+    const source = '## House chore\n\n+ Kitchen\n  + [ ] first\n+ Garden\n  + [ ] later\n'
+    const task = parseNote({ path: 'notes/n.md', source }).tasks[0]!
+    const inserted = appendTaskToContext(source, task)
+    expect(inserted.source).toBe(
+      '## House chore\n\n+ Kitchen\n  + [ ] first\n  + [ ] \n+ Garden\n  + [ ] later\n',
+    )
+    const created = parseNote({ path: 'notes/n.md', source: inserted.source }).tasks.find(
+      (candidate) => candidate.markerOffset === inserted.markerOffset,
+    )
+    expect(created?.breadcrumbs).toEqual(['House chore', 'Kitchen'])
+  })
+
+  it.each(['Tasks', '[[Tasks|To do]]'])(
+    'does not treat the generic %s heading as explicit continuation context',
+    (heading) => {
+      const source = `# Home\n\n## ${heading}\n\n+ [ ] first\n`
+      const task = parseNote({ path: 'notes/n.md', source }).tasks[0]!
+      expect(() => appendTaskToContext(source, task)).toThrow(TaskStaleError)
+    },
+  )
+
+  it('continues heading tasks with frontmatter and CRLF', () => {
+    const source = '---\r\nid: home\r\n---\r\n## House chore\r\n\r\n+ [ ] first\r\n'
+    const task = parseNote({ path: 'notes/n.md', source }).tasks[0]!
+    const inserted = appendTaskToContext(source, task)
+    expect(inserted.source).toBe(`${source}+ [ ] \r\n`)
+    const created = parseNote({ path: 'notes/n.md', source: inserted.source }).tasks[1]!
+    expect(created.markerOffset).toBe(inserted.markerOffset)
+    expect(created.breadcrumbs).toEqual(['House chore'])
+  })
+
   it('preserves CRLF line endings around the inserted task', () => {
     const source = '+ Group\r\n  + [ ] first\r\n'
     const task = parseNote({ path: 'notes/n.md', source }).tasks[0]!

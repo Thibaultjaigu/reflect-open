@@ -196,7 +196,7 @@ export interface TaskMarker {
 export interface ParsedTask extends TaskMarker {
   /** Inline text of the item's marker line, markdown stripped, for display + search. */
   text: string
-  /** Parent outline/list item text, top-down, for the Tasks view breadcrumb. */
+  /** Nearest meaningful heading followed by parent list labels, top-down, for the Tasks view breadcrumb. */
   breadcrumbs: readonly string[]
   /** `[x]`/`[X]` → true, `[ ]` → false. */
   checked: boolean
