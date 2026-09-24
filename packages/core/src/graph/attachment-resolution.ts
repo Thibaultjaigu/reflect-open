@@ -87,8 +87,12 @@ export function resolveAttachmentLink(
     if (existing !== undefined) {
       return existing
     }
-    // Only a slash-less candidate is matched by basename in the privacy gate.
-    const bare = candidates.find((path) => !path.includes('/'))
+    // Only an authored bare filename is Obsidian's shortest-path spelling
+    // (`./x`, `/x`, and `../x` each name one place), and only its slash-less
+    // candidate is matched by basename in the privacy gate.
+    const bare = isBareFilename(destination)
+      ? candidates.find((path) => !path.includes('/'))
+      : undefined
     const named = bare === undefined ? null : closestNamed(catalog, sourcePath, bare)
     if (named !== null) {
       return named
@@ -152,6 +156,10 @@ function closestNamed(catalog: AttachmentCatalog, sourcePath: string, name: stri
     (left, right) => depth(left) - depth(right) || (left < right ? -1 : left > right ? 1 : 0),
   )
   return closest ?? null
+}
+
+function isBareFilename(destination: string): boolean {
+  return !(destination.split(/[?#]/, 1)[0] ?? '').includes('/')
 }
 
 function filename(path: string): string {

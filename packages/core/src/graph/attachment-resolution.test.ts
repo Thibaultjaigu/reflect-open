@@ -102,6 +102,12 @@ describe('resolveAttachmentLink', () => {
     expect(resolveAttachmentLink('Projects/Plan.md', './garden-budget.png', vault)).toBe(
       'Projects/garden-budget.png',
     )
+    // Normalized to the vault root, but still one authored place each.
+    expect(resolveAttachmentLink('Home.md', './garden-budget.png', vault)).toBe('garden-budget.png')
+    expect(resolveAttachmentLink('Home.md', '/garden-budget.png', vault)).toBe('garden-budget.png')
+    expect(resolveAttachmentLink('Projects/Plan.md', '../garden-budget.png', vault)).toBe(
+      'garden-budget.png',
+    )
   })
 
   it('rejects URLs, notes, and traversal', () => {
