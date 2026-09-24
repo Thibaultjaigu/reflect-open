@@ -45,6 +45,7 @@ export function audioMemoEnrichmentConfig(config: AiProviderConfig): AiProviderC
     case 'google':
       return { ...config, model: GOOGLE_AUDIO_MEMO_ENRICHMENT_MODEL }
     case 'openrouter':
+    case 'requesty':
       return null
     case 'openai-compatible':
       return config
@@ -55,8 +56,9 @@ export function audioMemoEnrichmentConfig(config: AiProviderConfig): AiProviderC
  * Pick the small-model provider for audio memo enrichment. The user's
  * default provider wins when it has a fixed small model; otherwise the
  * first supported configured provider is used. OpenRouter is skipped because
- * `openrouter/auto` is not a small-model guarantee; OpenAI-compatible entries
- * use the model the user configured for that endpoint.
+ * `openrouter/auto` is not a small-model guarantee, and Requesty likewise has
+ * no fixed small model here; OpenAI-compatible entries use the model the user
+ * configured for that endpoint.
  */
 export function pickAudioMemoEnrichmentConfig(state: AiProvidersState): AiProviderConfig | null {
   const preferred = state.providers.find((provider) => provider.id === state.defaultProviderId)

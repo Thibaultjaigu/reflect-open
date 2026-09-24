@@ -177,6 +177,7 @@ describe('AiProvidersSection', () => {
     await dialog.getByRole('combobox', { name: 'Provider' }).click()
 
     await expect.element(page.getByRole('option', { name: 'OpenRouter' })).toBeInTheDocument()
+    await expect.element(page.getByRole('option', { name: 'Requesty' })).toBeInTheDocument()
     await expect
       .element(page.getByRole('option', { name: 'OpenAI-compatible' }))
       .toBeInTheDocument()

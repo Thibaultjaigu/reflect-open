@@ -3,6 +3,7 @@ import { anthropicDirectBrowserAccessHeaders } from './anthropic-headers.ts'
 import { APP_REVIEW_STUB_KEY } from './app-review-demo.ts'
 import { isHttpBaseUrl, normalizeOpenAICompatibleBaseUrl } from './openai-compatible.ts'
 import { OPENROUTER_BASE_URL } from './openrouter.ts'
+import { REQUESTY_BASE_URL } from './requesty.ts'
 
 /**
  * BYOK key validation (Plan 10): one cheap authenticated probe against the
@@ -54,6 +55,11 @@ const PROBES: Record<HostedAiProviderId, KeyProbe> = {
   },
   openrouter: {
     url: `${OPENROUTER_BASE_URL}/key`,
+    headers: (key) => ({ Authorization: `Bearer ${key}` }),
+    invalidStatuses: [401, 403],
+  },
+  requesty: {
+    url: `${REQUESTY_BASE_URL}/models`,
     headers: (key) => ({ Authorization: `Bearer ${key}` }),
     invalidStatuses: [401, 403],
   },

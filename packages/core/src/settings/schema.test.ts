@@ -306,6 +306,16 @@ describe('settingsSchema', () => {
       expect(settingsSchema.parse({ aiProviders: [entry] }).aiProviders).toEqual([entry])
     })
 
+    it('accepts Requesty entries', () => {
+      const entry = {
+        id: 'requesty',
+        provider: 'requesty',
+        model: 'openai/gpt-4o-mini',
+        keyHint: 'wxyz1',
+      }
+      expect(settingsSchema.parse({ aiProviders: [entry] }).aiProviders).toEqual([entry])
+    })
+
     it('accepts OpenAI-compatible entries with an http base URL', () => {
       const entry = {
         id: 'local',

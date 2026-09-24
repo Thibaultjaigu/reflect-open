@@ -98,6 +98,7 @@ describe('pickTranscriptionConfig', () => {
     const providers = [
       config({ id: 'claude', provider: 'anthropic', model: 'claude-fable-5' }),
       config({ id: 'openrouter', provider: 'openrouter', model: 'openrouter/auto' }),
+      config({ id: 'requesty', provider: 'requesty', model: 'openai/gpt-4o-mini' }),
     ]
     expect(pickTranscriptionConfig(state(providers, 'claude'))).toBeNull()
   })

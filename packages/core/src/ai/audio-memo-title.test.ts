@@ -44,6 +44,13 @@ const OPENROUTER_CONFIG: AiProviderConfig = {
   keyHint: 'wxyz1',
 }
 
+const REQUESTY_CONFIG: AiProviderConfig = {
+  id: 'cfg-requesty',
+  provider: 'requesty',
+  model: 'openai/gpt-4o-mini',
+  keyHint: 'wxyz1',
+}
+
 beforeEach(() => {
   vi.clearAllMocks()
 })
@@ -158,6 +165,19 @@ describe('generateAudioMemoTitle', () => {
       pickAudioMemoEnrichmentConfig({
         providers: [OPENROUTER_CONFIG, GOOGLE_CONFIG],
         defaultProviderId: OPENROUTER_CONFIG.id,
+      }),
+    ).toMatchObject({
+      id: GOOGLE_CONFIG.id,
+      provider: 'google',
+      model: 'gemini-3.1-flash-lite',
+    })
+  })
+
+  it('skips Requesty because it does not guarantee a small model', () => {
+    expect(
+      pickAudioMemoEnrichmentConfig({
+        providers: [REQUESTY_CONFIG, GOOGLE_CONFIG],
+        defaultProviderId: REQUESTY_CONFIG.id,
       }),
     ).toMatchObject({
       id: GOOGLE_CONFIG.id,

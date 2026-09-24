@@ -16,7 +16,7 @@ disk at call time), and it is covered by tests.
 ## AI chat (off until you add a key)
 
 - **Where:** directly to the provider whose API key *you* added — OpenAI, Anthropic,
-  Google, or OpenRouter. Keys are bring-your-own; Reflect proxies nothing.
+  Google, OpenRouter, or Requesty. Keys are bring-your-own; Reflect proxies nothing.
 - **What:** your chat messages and configured system prompt, plus what the model's
   tools read from your graph: search snippets, note content, and note listings. The
   configured prompt is stored in the device's ordinary settings file and is sent with

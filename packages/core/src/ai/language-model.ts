@@ -4,6 +4,7 @@ import { anthropicDirectBrowserAccessHeaders } from './anthropic-headers.ts'
 import { APP_REVIEW_STUB_KEY, createDemoModel } from './app-review-demo.ts'
 import { OPENAI_COMPATIBLE_PROVIDER_ID } from './openai-compatible.ts'
 import { OPENROUTER_BASE_URL, openRouterAttributionHeaders } from './openrouter.ts'
+import { REQUESTY_BASE_URL, requestyAttributionHeaders } from './requesty.ts'
 
 /**
  * Build the AI SDK model instance for a configured BYOK entry — the one place
@@ -46,6 +47,16 @@ export async function languageModel(
         baseURL: OPENROUTER_BASE_URL,
         headers: openRouterAttributionHeaders(),
         name: 'openrouter',
+      }).chat(config.model)
+    }
+    case 'requesty': {
+      const { createOpenAI } = await import('@reflect/modules/ai-sdk/openai')
+      return createOpenAI({
+        apiKey,
+        fetch: fetchFn,
+        baseURL: REQUESTY_BASE_URL,
+        headers: requestyAttributionHeaders(),
+        name: 'requesty',
       }).chat(config.model)
     }
     case 'openai-compatible': {

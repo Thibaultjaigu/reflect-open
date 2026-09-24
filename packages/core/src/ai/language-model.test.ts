@@ -42,6 +42,13 @@ const OPENROUTER_CONFIG: AiProviderConfig = {
   keyHint: 'wxyz1',
 }
 
+const REQUESTY_CONFIG: AiProviderConfig = {
+  id: 'cfg-requesty',
+  provider: 'requesty',
+  model: 'openai/gpt-4o-mini',
+  keyHint: 'wxyz1',
+}
+
 const OPENAI_COMPATIBLE_CONFIG: AiProviderConfig = {
   id: 'cfg-local',
   provider: 'openai-compatible',
@@ -112,6 +119,33 @@ function recordingOpenRouterFetch(calls: RecordedCall[]): typeof fetch {
         object: 'chat.completion',
         created: 0,
         model: OPENROUTER_CONFIG.model,
+        choices: [
+          {
+            index: 0,
+            message: { role: 'assistant', content: 'ok' },
+            finish_reason: 'stop',
+          },
+        ],
+        usage: { prompt_tokens: 1, completion_tokens: 1, total_tokens: 2 },
+      }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } },
+    )
+  }
+}
+
+function recordingRequestyFetch(calls: RecordedCall[]): typeof fetch {
+  return async (input, init) => {
+    calls.push({
+      url: String(input),
+      headers: new Headers(init?.headers),
+      body: typeof init?.body === 'string' ? init.body : null,
+    })
+    return new Response(
+      JSON.stringify({
+        id: 'chatcmpl_123',
+        object: 'chat.completion',
+        created: 0,
+        model: REQUESTY_CONFIG.model,
         choices: [
           {
             index: 0,
@@ -207,6 +241,23 @@ describe('languageModel', () => {
     expect(calls[0]!.headers.get('X-OpenRouter-Title')).toBe('Reflect')
   })
 
+  it('routes Requesty through its OpenAI-compatible chat endpoint', async () => {
+    const calls: RecordedCall[] = []
+
+    await generateText({
+      model: await languageModel(REQUESTY_CONFIG, 'rqsty-test', recordingRequestyFetch(calls)),
+      prompt: 'hello',
+      maxRetries: 0,
+    })
+
+    expect(calls).toHaveLength(1)
+    expect(calls[0]!.url).toBe('https://router.requesty.ai/v1/chat/completions')
+    expect(calls[0]!.body).toContain('"model":"openai/gpt-4o-mini"')
+    expect(calls[0]!.headers.get('Authorization')).toBe('Bearer rqsty-test')
+    expect(calls[0]!.headers.get('HTTP-Referer')).toBe('https://reflect.app')
+    expect(calls[0]!.headers.get('X-Title')).toBe('Reflect')
+  })
+
   it('routes custom OpenAI-compatible providers through their configured endpoint', async () => {
     const calls: RecordedCall[] = []
 
@@ -235,6 +286,7 @@ describe('languageModel', () => {
       ANTHROPIC_CONFIG,
       GOOGLE_CONFIG,
       OPENROUTER_CONFIG,
+      REQUESTY_CONFIG,
       OPENAI_COMPATIBLE_CONFIG,
     ]) {
       expect(await languageModel(config, APP_REVIEW_STUB_KEY, throwingFetch)).toMatchObject({

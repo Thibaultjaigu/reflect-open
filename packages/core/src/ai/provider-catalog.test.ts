@@ -63,6 +63,18 @@ describe('AI_PROVIDERS', () => {
         ],
       },
       {
+        id: 'requesty',
+        models: [
+          'gpt-6-astra',
+          'gpt-6-sol',
+          'claude-fable-5.1',
+          'claude-sonnet-5',
+          'claude-sonnet-5@eu',
+          'gemini-3.8-flash',
+          'gpt-5.4-mini',
+        ],
+      },
+      {
         id: 'openai-compatible',
         models: ['local-model'],
       },

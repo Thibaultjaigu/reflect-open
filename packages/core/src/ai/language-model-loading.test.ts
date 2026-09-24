@@ -41,6 +41,8 @@ it('loads no SDK for configuration or demo mode, then only each selected impleme
   expect(loaded).toEqual(new Set(['openai']))
   await languageModel({ ...config, provider: 'openrouter' }, 'sk-test', transport)
   expect(loaded).toEqual(new Set(['openai']))
+  await languageModel({ ...config, provider: 'requesty' }, 'rqsty-test', transport)
+  expect(loaded).toEqual(new Set(['openai']))
   await languageModel({ ...config, provider: 'anthropic' }, 'sk-test', transport)
   expect(loaded).toEqual(new Set(['openai', 'anthropic']))
   await languageModel({ ...config, provider: 'google' }, 'sk-test', transport)

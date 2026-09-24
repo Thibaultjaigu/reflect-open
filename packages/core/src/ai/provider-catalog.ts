@@ -131,6 +131,21 @@ export const AI_PROVIDERS: NonEmptyArray<AiProviderInfo> = [
     ],
   },
   {
+    id: 'requesty',
+    label: 'Requesty',
+    apiKeyRequired: true,
+    keyPlaceholder: 'rqsty-…',
+    models: [
+      { id: 'gpt-6-astra', label: 'GPT-6 Astra', contextWindow: 1_000_000 },
+      { id: 'gpt-6-sol', label: 'GPT-6 Sol', contextWindow: 1_000_000 },
+      { id: 'claude-fable-5.1', label: 'Claude Fable 5.1', contextWindow: 1_000_000 },
+      { id: 'claude-sonnet-5', label: 'Claude Sonnet 5', contextWindow: 1_000_000 },
+      { id: 'claude-sonnet-5@eu', label: 'Claude Sonnet 5 (EU)', contextWindow: 1_000_000 },
+      { id: 'gemini-3.8-flash', label: 'Gemini 3.8 Flash', contextWindow: 1_000_000 },
+      { id: 'gpt-5.4-mini', label: 'GPT-5.4 mini', contextWindow: 400_000 },
+    ],
+  },
+  {
     id: 'openai-compatible',
     label: 'OpenAI-compatible',
     apiKeyRequired: false,
